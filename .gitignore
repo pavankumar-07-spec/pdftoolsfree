@@ -1,0 +1,32 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor configs
+.vscode/
+.idea/
+
+# Local dev/audit scripts (not part of the deployed site)
+/dev-scripts/
+
+# Logs
+*.log
+
+# Env files
+.env
+.env.local
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
+
+# Temporary test profiles & reports
+.tmp-chrome-profile/
+test-assets/
+e2e-test-results.json
+data/deep-platform-audit.json
+data/tool-ui-classification.json
+
+

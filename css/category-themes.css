@@ -1,0 +1,345 @@
+/* ============================================================
+   FreeToolsPDF — Category-Specific Visual Themes
+   Scoped via [data-category="slug"] on <main class="tool-page-shell">
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. CALCULATORS & MATH (calc)
+   Color: Warm Amber (#CA8A04)
+   Signature: Ledger lines, monospace result cards
+   ------------------------------------------------------------ */
+[data-category="calc"] {
+  --cat-color: #CA8A04;
+  --cat-light: rgba(202, 138, 4, 0.1);
+  --cat-border: rgba(202, 138, 4, 0.3);
+}
+
+[data-category="calc"] .tool-card,
+[data-category="calc"] .tool-card-input,
+[data-category="calc"] .tool-card-output {
+  border-left: 4px solid var(--cat-color) !important;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(202, 138, 4, 0.05) 31px,
+    rgba(202, 138, 4, 0.05) 32px
+  );
+}
+
+[data-category="calc"] .btn-primary,
+[data-category="calc"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #D4A106 0%, #CA8A04 100%) !important;
+  border-color: #CA8A04 !important;
+  color: #FFFFFF !important;
+}
+
+[data-category="calc"] input[type="number"],
+[data-category="calc"] textarea#main-output {
+  font-family: var(--font-mono, monospace) !important;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------
+   2. IMAGE TOOLS (image)
+   Color: Vivid Violet (#7C3AED)
+   Signature: Photographers canvas, checkerboard transparency grid
+   ------------------------------------------------------------ */
+[data-category="image"] {
+  --cat-color: #7C3AED;
+  --cat-light: rgba(124, 58, 237, 0.1);
+  --cat-border: rgba(124, 58, 237, 0.3);
+}
+
+[data-category="image"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+}
+
+[data-category="image"] .image-preview-container,
+[data-category="image"] canvas,
+[data-category="image"] .preview-box {
+  background-image: repeating-conic-gradient(#f1f5f9 0% 25%, #ffffff 0% 50%) !important;
+  background-size: 20px 20px !important;
+  border: 2px dashed var(--cat-border) !important;
+  border-radius: var(--radius-md, 12px) !important;
+}
+
+[data-theme="dark"] [data-category="image"] .image-preview-container,
+[data-theme="dark"] [data-category="image"] canvas {
+  background-image: repeating-conic-gradient(#1e293b 0% 25%, #0f172a 0% 50%) !important;
+}
+
+[data-category="image"] .btn-primary,
+[data-category="image"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%) !important;
+  border-color: #7C3AED !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   3. PDF TOOLS (pdf)
+   Color: Crimson Red (#DC2626)
+   Signature: Stacked physical paper depth effect
+   ------------------------------------------------------------ */
+[data-category="pdf"] {
+  --cat-color: #DC2626;
+  --cat-light: rgba(220, 38, 38, 0.1);
+  --cat-border: rgba(220, 38, 38, 0.3);
+}
+
+[data-category="pdf"] .tool-card {
+  position: relative;
+  border-left: 4px solid var(--cat-color) !important;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    4px 4px 0 rgba(220, 38, 38, 0.15),
+    8px 8px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-category="pdf"] .btn-primary,
+[data-category="pdf"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%) !important;
+  border-color: #DC2626 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   4. DEVELOPER & FILE TOOLS (dev)
+   Color: Cyan (#0891B2) / IDE Dark Theme
+   Signature: Terminal chrome title bar with ● ● ● dots
+   ------------------------------------------------------------ */
+[data-category="dev"] {
+  --cat-color: #0891B2;
+  --cat-light: rgba(8, 145, 178, 0.1);
+  --cat-border: rgba(8, 145, 178, 0.3);
+}
+
+[data-category="dev"] .tool-card {
+  border-top: 3px solid var(--cat-color) !important;
+  position: relative;
+}
+
+[data-category="dev"] .tool-card::before {
+  content: "● ● ●";
+  display: block;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #64748b;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+[data-category="dev"] textarea,
+[data-category="dev"] input[type="text"],
+[data-category="dev"] code {
+  font-family: Consolas, Monaco, "Fira Code", monospace !important;
+  background: #0f172a !important;
+  color: #38bdf8 !important;
+}
+
+[data-category="dev"] .btn-primary,
+[data-category="dev"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%) !important;
+  border-color: #0891B2 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   5. CONVERTERS (converter)
+   Color: Violet Indigo (#8B5CF6)
+   Signature: 2-way swap bridge and glow
+   ------------------------------------------------------------ */
+[data-category="converter"] {
+  --cat-color: #8B5CF6;
+  --cat-light: rgba(139, 92, 246, 0.1);
+  --cat-border: rgba(139, 92, 246, 0.3);
+}
+
+[data-category="converter"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+}
+
+[data-category="converter"] .btn-primary,
+[data-category="converter"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%) !important;
+  border-color: #8B5CF6 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   6. GENERATORS (generator)
+   Color: Bright Amber-Orange (#F59E0B)
+   Signature: Electric spark focus and copy box glow
+   ------------------------------------------------------------ */
+[data-category="generator"] {
+  --cat-color: #F59E0B;
+  --cat-light: rgba(245, 158, 11, 0.1);
+  --cat-border: rgba(245, 158, 11, 0.3);
+}
+
+[data-category="generator"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+}
+
+[data-category="generator"] .btn-primary,
+[data-category="generator"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%) !important;
+  border-color: #F59E0B !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   7. TEXT & STRING TOOLS (text)
+   Color: Forest Emerald (#059669)
+   Signature: Typewriter clean workspace border
+   ------------------------------------------------------------ */
+[data-category="text"] {
+  --cat-color: #059669;
+  --cat-light: rgba(5, 150, 105, 0.1);
+  --cat-border: rgba(5, 150, 105, 0.3);
+}
+
+[data-category="text"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+}
+
+[data-category="text"] .btn-primary,
+[data-category="text"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%) !important;
+  border-color: #059669 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   8. PLANNERS & PRODUCTIVITY (planner)
+   Color: Indigo (#6366F1)
+   Signature: Bullet-journal dot grid background
+   ------------------------------------------------------------ */
+[data-category="planner"] {
+  --cat-color: #6366F1;
+  --cat-light: rgba(99, 102, 241, 0.1);
+  --cat-border: rgba(99, 102, 241, 0.3);
+}
+
+[data-category="planner"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+  background-image: radial-gradient(rgba(99, 102, 241, 0.15) 1px, transparent 1px) !important;
+  background-size: 16px 16px !important;
+}
+
+[data-category="planner"] .btn-primary,
+[data-category="planner"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #818CF8 0%, #6366F1 100%) !important;
+  border-color: #6366F1 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   9. DESIGN & COLOR TOOLS (design)
+   Color: Fuchsia Pink (#EC4899)
+   Signature: Rainbow spectrum border accent
+   ------------------------------------------------------------ */
+[data-category="design"] {
+  --cat-color: #EC4899;
+  --cat-light: rgba(236, 72, 153, 0.1);
+  --cat-border: rgba(236, 72, 153, 0.3);
+}
+
+[data-category="design"] .tool-card {
+  border-top: 3px solid transparent !important;
+  border-image: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #10b981) 1 !important;
+}
+
+[data-category="design"] .btn-primary,
+[data-category="design"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%) !important;
+  border-color: #EC4899 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   10. B.TECH LEVEL MATH TOOLS (math)
+   Color: Engineering Teal (#0EA5A0)
+   Signature: Graph paper linear grid texture
+   ------------------------------------------------------------ */
+[data-category="math"] {
+  --cat-color: #0EA5A0;
+  --cat-light: rgba(14, 165, 160, 0.1);
+  --cat-border: rgba(14, 165, 160, 0.3);
+}
+
+[data-category="math"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+  background-image: 
+    linear-gradient(rgba(14, 165, 160, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 160, 0.05) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+}
+
+[data-category="math"] .btn-primary,
+[data-category="math"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #14B8A6 0%, #0EA5A0 100%) !important;
+  border-color: #0EA5A0 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   11. SECURITY & ENCRYPTION TOOLS (security)
+   Color: Emerald Shield (#10B981)
+   Signature: Dark vault terminal & glowing green security focus
+   ------------------------------------------------------------ */
+[data-category="security"] {
+  --cat-color: #10B981;
+  --cat-light: rgba(16, 185, 129, 0.1);
+  --cat-border: rgba(16, 185, 129, 0.3);
+}
+
+[data-category="security"] .tool-card {
+  border-left: 4px solid var(--cat-color) !important;
+}
+
+[data-category="security"] textarea,
+[data-category="security"] input[type="text"] {
+  font-family: Consolas, Monaco, monospace !important;
+}
+
+[data-category="security"] input:focus,
+[data-category="security"] textarea:focus {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+  border-color: #10B981 !important;
+}
+
+[data-category="security"] .btn-primary,
+[data-category="security"] button[id*="calc-"] {
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%) !important;
+  border-color: #10B981 !important;
+  color: #FFFFFF !important;
+}
+
+/* ------------------------------------------------------------
+   8. HERO CATEGORY BACKGROUND TINTS
+   ------------------------------------------------------------ */
+[data-category="pdf"] .tool-hero {
+  background: linear-gradient(135deg, #180507 0%, #2a0b0e 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(220, 38, 38, 0.4);
+}
+[data-category="image"] .tool-hero {
+  background: linear-gradient(135deg, #120924 0%, #1e103b 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(124, 58, 237, 0.4);
+}
+[data-category="calc"] .tool-hero {
+  background: linear-gradient(135deg, #1c1404 0%, #2e2107 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(202, 138, 4, 0.4);
+}
+[data-category="text"] .tool-hero {
+  background: linear-gradient(135deg, #041710 0%, #08291c 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(5, 150, 105, 0.4);
+}
+[data-category="dev"] .tool-hero {
+  background: linear-gradient(135deg, #03171f 0%, #062835 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(8, 145, 178, 0.4);
+}
+[data-category="planners"] .tool-hero {
+  background: linear-gradient(135deg, #051a14 0%, #092e23 60%, #0b0e1a 100%) !important;
+  border-bottom: 2px solid rgba(16, 185, 129, 0.4);
+}
+

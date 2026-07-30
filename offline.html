@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're Offline — FreeToolsPDF</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script>(function(){var t=localStorage.getItem('suh-theme'),d=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',(t==='dark'||(t!=='light'&&d))?'dark':'light');})()</script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',system-ui,-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0F172A;color:#F8FAFC;text-align:center;padding:2rem}
+    [data-theme="light"] body{background:#F8FAFC;color:#0F172A}
+    .card{background:#1E293B;border:1px solid #334155;border-radius:1.25rem;padding:3rem 2rem;max-width:480px;width:100%}
+    [data-theme="light"] .card{background:#FFFFFF;border-color:#E2E8F0;box-shadow:0 4px 12px rgba(15,23,42,0.08)}
+    .icon{font-size:5rem;margin-bottom:1.5rem;display:block}
+    h1{font-size:2rem;font-weight:800;margin-bottom:1rem;background:linear-gradient(135deg,#3B82F6,#0EA5E9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    p{color:#CBD5E1;line-height:1.7;margin-bottom:2rem;font-size:1rem}
+    [data-theme="light"] p{color:#64748B}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#FF5A1F,#1D4FD1);color:#fff;border:none;border-radius:9999px;padding:.875rem 2rem;font-size:1rem;font-weight:600;cursor:pointer;text-decoration:none;transition:transform .2s,box-shadow .2s}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.4)}
+    .cached-note{margin-top:1.5rem;font-size:.8rem;color:#94A3B8;background:rgba(59,130,246,.12);border-radius:.5rem;padding:.75rem 1rem}
+    [data-theme="light"] .cached-note{background:#DBEAFE;color:#1D4ED8}
+    .tools-list{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;margin:1.5rem 0}
+    .tool-chip{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9999px;padding:.375rem .875rem;font-size:.8rem;color:#CBD5E1;text-decoration:none;transition:background .2s}
+    [data-theme="light"] .tool-chip{background:#F1F5F9;border-color:#E2E8F0;color:#64748B}
+    .tool-chip:hover{background:rgba(59,130,246,.18);color:#93C5FD}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon">📡</span>
+    <h1>You're Offline</h1>
+    <p>It looks like you've lost your internet connection. Don't worry — many FreeToolsPDF tools work entirely in your browser and may still be available if you visited them before.</p>
+
+    <a href="/" class="btn">🏠 Try Homepage</a>
+
+    <div class="tools-list">
+      <a href="/tools/merge-pdf.html" class="tool-chip">🔀 Merge PDF</a>
+      <a href="/tools/compress-pdf.html" class="tool-chip">🗜️ Compress PDF</a>
+      <a href="/tools/attendance-calculator.html" class="tool-chip">📊 Attendance</a>
+      <a href="/tools/cgpa-to-percentage-calculator.html" class="tool-chip">🎓 CGPA</a>
+      <a href="/tools/image-to-pdf.html" class="tool-chip">📷 Image to PDF</a>
+    </div>
+
+    <div class="cached-note">
+      💡 Pages you've visited before are cached and may load even without internet. Try clicking any tool above.
+    </div>
+  </div>
+
+  <script>
+    // Auto-reload when back online
+    window.addEventListener('online', () => {
+      window.location.reload();
+    });
+  </script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

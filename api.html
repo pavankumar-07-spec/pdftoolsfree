@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Reference — FreeToolsPDF</title>
+  <meta name="description" content="FreeToolsPDF Developer Reference: Architecture overview, tool list, keyboard shortcuts, embedding guide, and privacy model. 100% client-side, no backend.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://pdftoolsfree.in/api.html">
+  <link rel="stylesheet" href="css/main.min.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <script>(function(){var t=localStorage.getItem('suh-theme'),d=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',(t==='dark'||(t!=='light'&&d))?'dark':'light');})()</script>
+
+  <style>
+    /* ── Developer Docs Styles ─────────────────────────────────── */
+    .dev-hero {
+      background: linear-gradient(135deg, #1C2621 0%, #163A32 50%, #1C2621 100%);
+      padding: 4rem 0 3rem; color: white;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .dev-hero h1 { color: white; font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .dev-hero p { color: rgba(255,255,255,0.7); font-size: 1.05rem; max-width: 600px; }
+    .dev-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8); border-radius: 9999px;
+      padding: 0.35rem 0.875rem; font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .dev-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.5rem; }
+    .dev-tag {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.65); border-radius: 9999px;
+      padding: 0.3rem 0.875rem; font-size: 0.78rem; font-family: monospace;
+    }
+
+    /* Layout: sidebar + content */
+    .dev-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+      padding: 3rem 0 5rem;
+    }
+    .dev-sidebar {
+      position: sticky; top: 88px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 1rem; padding: 1.5rem;
+    }
+    .dev-sidebar-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.875rem; }
+    .dev-sidebar-link {
+      display: block; padding: 0.45rem 0.75rem; border-radius: 0.5rem;
+      font-size: 0.85rem; font-weight: 500; color: var(--text-secondary);
+      text-decoration: none; transition: all 0.15s; margin-bottom: 0.15rem;
+    }
+    .dev-sidebar-link:hover { color: var(--primary); background: var(--primary-light); }
+    .dev-sidebar-link.active { color: var(--primary); background: var(--primary-light); font-weight: 600; }
+
+    /* Content sections */
+    .dev-section {
+      margin-bottom: 3.5rem; scroll-margin-top: 100px;
+    }
+    .dev-section h2 {
+      font-size: 1.6rem; font-weight: 800; margin-bottom: 1rem;
+      padding-bottom: 0.75rem; border-bottom: 2px solid var(--card-border);
+      display: flex; align-items: center; gap: 0.625rem;
+    }
+    .dev-section h3 { font-size: 1.1rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: var(--text); }
+    .dev-section p { font-size: 0.95rem; color: var(--text-secondary); line-height: 1.75; margin-bottom: 1rem; }
+
+    /* Code blocks */
+    pre {
+      background: #0d1117; color: #e6edf3;
+      border: 1px solid #30363d; border-radius: 0.75rem;
+      padding: 1.25rem 1.5rem; overflow-x: auto;
+      font-size: 0.85rem; line-height: 1.6; margin: 1rem 0;
+    }
+    code {
+      font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    }
+    :not(pre) > code {
+      background: var(--bg-tertiary); color: var(--primary);
+      border-radius: 0.3rem; padding: 0.1rem 0.4rem; font-size: 0.875em;
+      border: 1px solid var(--card-border);
+    }
+    .code-label {
+      font-size: 0.72rem; color: #8b949e; display: block; margin-bottom: -0.5rem;
+      font-family: monospace; background: #161b22; padding: 0.4rem 1rem;
+      border-radius: 0.75rem 0.75rem 0 0; border: 1px solid #30363d; border-bottom: none;
+    }
+    /* Syntax colors */
+    .kw { color: #ff7b72; }
+    .str { color: #a5d6ff; }
+    .num { color: #79c0ff; }
+    .cmt { color: #8b949e; font-style: italic; }
+    .key { color: #ff7b72; }
+    .val { color: #a5d6ff; }
+
+    /* Feature table */
+    .feature-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 1rem 0; }
+    .feature-table th { background: var(--bg-secondary); padding: 0.75rem 1rem; text-align: left; font-weight: 700; color: var(--text); border-bottom: 2px solid var(--card-border); }
+    .feature-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--card-border); color: var(--text-secondary); vertical-align: middle; }
+    .feature-table tr:last-child td { border-bottom: none; }
+    .feature-table tr:hover td { background: var(--bg-secondary); }
+    .badge-yes { background: var(--success-light); color: var(--success); border-radius: 9999px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+    .badge-no  { background: var(--error-light); color: var(--error); border-radius: 9999px; padding: 0.2rem 0.6rem; font-size: 0.75rem; font-weight: 700; }
+
+    /* Keyboard shortcut display */
+    .shortcut-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+    .shortcut-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem; background: var(--bg-secondary);
+      border: 1px solid var(--card-border); border-radius: 0.75rem; gap: 1rem;
+    }
+    .shortcut-desc { font-size: 0.875rem; color: var(--text-secondary); }
+    .shortcut-keys { display: flex; gap: 0.3rem; align-items: center; flex-shrink: 0; }
+    .shortcut-keys kbd {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-bottom: 2px solid var(--card-border); border-radius: 0.35rem;
+      padding: 0.2rem 0.5rem; font-size: 0.78rem; font-weight: 600; font-family: monospace;
+      color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .shortcut-keys .kbd-sep { color: var(--text-muted); font-size: 0.8rem; }
+
+    /* Tools JSON table */
+    .tools-json { max-height: 400px; overflow-y: auto; }
+
+    /* Alert boxes */
+    .dev-alert {
+      display: flex; gap: 0.875rem; padding: 1rem 1.25rem;
+      border-radius: 0.75rem; border-left: 4px solid; margin: 1.25rem 0;
+    }
+    .dev-alert-info { background: var(--info-light); border-color: var(--info); }
+    .dev-alert-success { background: var(--success-light); border-color: var(--success); }
+    .dev-alert-warning { background: var(--warning-light); border-color: var(--warning); }
+    .dev-alert p { margin: 0; font-size: 0.875rem; }
+    .dev-alert strong { color: var(--text); display: block; margin-bottom: 0.25rem; }
+
+    @media (max-width: 900px) {
+      .dev-layout { grid-template-columns: 1fr; }
+      .dev-sidebar { position: static; }
+    }
+  </style>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- NAVBAR -->
+<header>
+  <nav class="navbar" id="main-navbar" aria-label="Main navigation">
+    <div class="container">
+      <a href="index.html" class="nav-logo" aria-label="FreeToolsPDF — Home">
+        <div class="nav-logo-icon" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l10 6.5-10 6.5-10-6.5z"/><path d="M22 8.5v5.5"/><path d="M6 12.4v4.6c0 1.5 2.7 2.7 6 2.7s6-1.2 6-2.7v-4.6"/><path d="M12 22l0-9.5"/></svg></div>
+        
+      <ul class="nav-links" role="list">
+        <li><a href="index.html" class="nav-link">🏠 Home</a></li>
+        <li><a href="categories/pdf.html" class="nav-link">📄 PDF Tools</a></li>
+        <li><a href="analytics.html" class="nav-link">📊 Dashboard</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div id="dark-toggle-container" aria-label="Theme toggle"></div>
+        <button class="nav-hamburger" id="nav-hamburger" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-mobile-drawer"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+  </nav>
+  <nav class="nav-mobile-drawer" id="nav-mobile-drawer" aria-label="Mobile navigation" aria-hidden="true">
+    <a href="index.html" class="nav-mobile-link">🏠 Home</a>
+    <a href="analytics.html" class="nav-mobile-link">📊 My Dashboard</a>
+    <a href="api.html" class="nav-mobile-link">👨‍💻 Developers</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<div class="dev-hero">
+  <div class="container">
+    <div class="dev-badge">👨‍💻 Developer Reference · v1.0</div>
+    <h1 id="main-content">FreeToolsPDF — Developer Reference</h1>
+    <p>Architecture overview, tool directory, embedding guide, keyboard shortcuts, and privacy model for FreeToolsPDF's 57+ client-side tools.</p>
+    <div class="dev-tags">
+      <span class="dev-tag">HTML5</span>
+      <span class="dev-tag">Vanilla JS</span>
+      <span class="dev-tag">WebAssembly</span>
+      <span class="dev-tag">PWA</span>
+      <span class="dev-tag">PDF-lib</span>
+      <span class="dev-tag">Canvas API</span>
+      <span class="dev-tag">File API</span>
+      <span class="dev-tag">localStorage</span>
+      <span class="dev-tag">ServiceWorker</span>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="container">
+    <div class="dev-layout">
+
+      <!-- SIDEBAR -->
+      <aside class="dev-sidebar" aria-label="Table of contents">
+        <div class="dev-sidebar-title">On This Page</div>
+        <a href="#architecture" class="dev-sidebar-link">🏗️ Architecture</a>
+        <a href="#privacy" class="dev-sidebar-link">🔒 Privacy Model</a>
+        <a href="#tools-directory" class="dev-sidebar-link">📋 Tools Directory</a>
+        <a href="#tech-stack" class="dev-sidebar-link">⚙️ Tech Stack</a>
+        <a href="#keyboard-shortcuts" class="dev-sidebar-link">⌨️ Keyboard Shortcuts</a>
+        <a href="#embedding" class="dev-sidebar-link">🔗 Embedding Tools</a>
+        <a href="#pwa" class="dev-sidebar-link">📲 PWA & Offline</a>
+        <a href="#localStorage" class="dev-sidebar-link">💾 localStorage Keys</a>
+        <a href="#contributing" class="dev-sidebar-link">🤝 Contributing</a>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <div>
+
+        <!-- ARCHITECTURE -->
+        <section class="dev-section" id="architecture">
+          <h2>🏗️ Architecture Overview</h2>
+          <p>FreeToolsPDF is a <strong>100% static, client-side web application</strong>. There is no backend server, no database, and no server-side processing. Every tool runs entirely within the user's browser.</p>
+
+          <div class="dev-alert dev-alert-info">
+            <div>
+              <strong>Key Principle</strong>
+              <p>Your files and data are never uploaded to any server. All processing happens locally using JavaScript, WebAssembly, and browser APIs.</p>
+            </div>
+          </div>
+
+          <h3>File Structure</h3>
+          <span class="code-label">Project root</span>
+          <pre><code>pdftoolsfree/
+├── index.html          <span class="cmt"># Homepage with tool directory</span>
+├── analytics.html      <span class="cmt"># User dashboard (localStorage)</span>
+├── api.html            <span class="cmt"># This page</span>
+├── manifest.json       <span class="cmt"># PWA Web App Manifest</span>
+├── sw.js               <span class="cmt"># Service Worker (cache-first)</span>
+├── offline.html        <span class="cmt"># Offline fallback page</span>
+├── tools/              <span class="cmt"># 57 individual tool pages</span>
+│   ├── merge-pdf.html
+│   ├── compress-pdf.html
+│   └── ...
+├── categories/         <span class="cmt"># Category landing pages</span>
+│   ├── pdf.html
+│   ├── calculators.html
+│   └── ...
+├── css/
+│   ├── main.css        <span class="cmt"># Design system + components</span>
+│   ├── dark-mode.css   <span class="cmt"># Dark mode overrides</span>
+│   └── mobile.css      <span class="cmt"># Responsive breakpoints</span>
+├── js/
+│   ├── app.js          <span class="cmt"># Homepage: TOOLS_DATA registry, search, init</span>
+│   ├── enhancements.js <span class="cmt"># Global: PWA, share, suggested tools, badges</span>
+│   ├── components/     <span class="cmt"># Reusable UI component classes</span>
+│   │   ├── Button.js, InputField.js, ResultCard.js
+│   │   ├── SearchBar.js, CategoryCard.js, Toggle.js
+│   │   └── CookieBanner.js
+│   └── utils/
+│       ├── toast.js, nav.js, history.js
+│       ├── copy.js, download.js, scriptloader.js
+└── icons/              <span class="cmt"># PWA app icons</span></code></pre>
+
+          <h3>Script Load Order</h3>
+          <p>Scripts are loaded in a specific order at the bottom of each page's <code>&lt;body&gt;</code> to ensure dependencies are available:</p>
+          <pre><code><span class="num">1.</span> toast.js       <span class="cmt"># showToast() — must be first</span>
+<span class="num">2.</span> history.js     <span class="cmt"># localStorage history utilities</span>
+<span class="num">3.</span> copy.js        <span class="cmt"># Clipboard copy utilities</span>
+<span class="num">4.</span> download.js    <span class="cmt"># File download utilities</span>
+<span class="num">5.</span> Toggle.js      <span class="cmt"># Dark mode component</span>
+<span class="num">6.</span> Button.js      <span class="cmt"># Stateful button component</span>
+<span class="num">7.</span> InputField.js  <span class="cmt"># Form input component</span>
+<span class="num">8.</span> ResultCard.js  <span class="cmt"># Output display component</span>
+<span class="num">9.</span> SearchBar.js   <span class="cmt"># Live search component</span>
+<span class="num">10.</span> CategoryCard.js <span class="cmt"># Tool card component</span>
+<span class="num">11.</span> nav.js        <span class="cmt"># Navbar, hamburger, dark mode render</span>
+<span class="num">12.</span> app.js        <span class="cmt"># Homepage features (search, categories)</span>
+<span class="num">13.</span> CookieBanner.js
+<span class="num">14.</span> enhancements.js <span class="cmt"># Global UX: PWA, share, suggested, badges</span></code></pre>
+        </section>
+
+        <!-- PRIVACY MODEL -->
+        <section class="dev-section" id="privacy">
+          <h2>🔒 Privacy Model</h2>
+          <p>FreeToolsPDF's privacy is guaranteed by design — there is simply no server to send data to.</p>
+
+          <table class="feature-table">
+            <thead><tr><th>Data Type</th><th>Where It Goes</th><th>Uploaded?</th></tr></thead>
+            <tbody>
+              <tr><td>PDF files</td><td>Browser memory only</td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Images</td><td>Browser memory / Canvas</td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Calculation results</td><td>Browser DOM only</td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Tool usage history</td><td><code>localStorage</code></td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Star ratings</td><td><code>localStorage</code></td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Theme preference</td><td><code>localStorage</code></td><td><span class="badge-no">Never</span></td></tr>
+              <tr><td>Page analytics</td><td>Microsoft Clarity (anonymised)</td><td><span class="badge-yes">Yes*</span></td></tr>
+            </tbody>
+          </table>
+
+          <div class="dev-alert dev-alert-warning">
+            <div>
+              <strong>* Microsoft Clarity</strong>
+              <p>We use Microsoft Clarity for heatmaps and session recordings. No file content is captured — only user interactions (clicks, scrolls) are recorded.</p>
+            </div>
+          </div>
+
+          <h3>How PDF processing works</h3>
+          <span class="code-label">merge-pdf.html — excerpt</span>
+          <pre><code><span class="cmt">// 1. Lazy-load pdf-lib from CDN (only when needed)</span>
+<span class="kw">await</span> ScriptLoader.load(
+  <span class="str">'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js'</span>,
+  <span class="str">'PDFLib'</span>
+);
+
+<span class="cmt">// 2. Read files as ArrayBuffers — stays in memory</span>
+<span class="kw">const</span> buffer = <span class="kw">await</span> file.arrayBuffer();
+<span class="kw">const</span> pdf = <span class="kw">await</span> PDFDocument.load(buffer);
+
+<span class="cmt">// 3. Process and download — never leaves the browser</span>
+<span class="kw">const</span> bytes = <span class="kw">await</span> mergedPdf.save();
+<span class="kw">const</span> blob = <span class="kw">new</span> Blob([bytes], { type: <span class="str">'application/pdf'</span> });
+<span class="kw">const</span> url = URL.createObjectURL(blob);
+a.href = url; a.download = <span class="str">'merged.pdf'</span>; a.click();</code></pre>
+        </section>
+
+        <!-- TOOLS DIRECTORY -->
+        <section class="dev-section" id="tools-directory">
+          <h2>📋 Tools Directory</h2>
+          <p>All 57 tools are registered in <code>js/app.js</code> as the <code>TOOLS_DATA</code> array. Below is the full list in JSON format:</p>
+
+          <span class="code-label">js/app.js — TOOLS_DATA (excerpt)</span>
+          <pre class="tools-json"><code>[
+  {
+    <span class="key">"id"</span>: <span class="str">"merge-pdf"</span>,
+    <span class="key">"name"</span>: <span class="str">"Merge PDF"</span>,
+    <span class="key">"category"</span>: <span class="str">"PDF Tools"</span>,
+    <span class="key">"icon"</span>: <span class="str">"🔀"</span>,
+    <span class="key">"desc"</span>: <span class="str">"Combine multiple PDFs into one document."</span>,
+    <span class="key">"link"</span>: <span class="str">"tools/merge-pdf.html"</span>,
+    <span class="key">"tags"</span>: [<span class="str">"merge"</span>, <span class="str">"combine"</span>, <span class="str">"pdf"</span>, <span class="str">"join"</span>],
+    <span class="key">"featured"</span>: <span class="kw">true</span>
+  },
+  <span class="cmt">// ... 56 more tools in Calculators, Image Tools, Planners, Generators</span>
+]
+
+<span class="cmt">// Categories: PDF Tools (26), Image Tools (19),</span>
+<span class="cmt">// Calculators (8), Generators (2), Planners (3)</span></code></pre>
+
+          <h3>Tool Categories</h3>
+          <table class="feature-table">
+            <thead><tr><th>Category</th><th>Count</th><th>Category Page</th></tr></thead>
+            <tbody>
+              <tr><td>📄 PDF Tools</td><td>26</td><td><a href="categories/pdf.html">/categories/pdf.html</a></td></tr>
+              <tr><td>🖼️ Image Tools</td><td>19</td><td>(listed on homepage)</td></tr>
+              <tr><td>📊 Calculators</td><td>8</td><td><a href="categories/calculators.html">/categories/calculators.html</a></td></tr>
+              <tr><td>📅 Planners</td><td>3</td><td><a href="categories/planners.html">/categories/planners.html</a></td></tr>
+              <tr><td>✨ Generators</td><td>2</td><td><a href="categories/generators.html">/categories/generators.html</a></td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- TECH STACK -->
+        <section class="dev-section" id="tech-stack">
+          <h2>⚙️ Tech Stack</h2>
+
+          <table class="feature-table">
+            <thead><tr><th>Component</th><th>Technology</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Language</td><td>HTML5, Vanilla JavaScript (ES6+)</td><td>No framework, no build step</td></tr>
+              <tr><td>Styling</td><td>Vanilla CSS with custom properties</td><td>No Tailwind, no preprocessors</td></tr>
+              <tr><td>Fonts</td><td>Fraunces, Work Sans, IBM Plex Mono (Google Fonts)</td><td>Display-swap for performance</td></tr>
+              <tr><td>PDF processing</td><td><a href="https://pdf-lib.js.org/" target="_blank" rel="noopener">pdf-lib v1.17.1</a> via unpkg CDN</td><td>Lazy-loaded on first use</td></tr>
+              <tr><td>Image processing</td><td>Canvas API, File API</td><td>Native browser APIs</td></tr>
+              <tr><td>HEIC conversion</td><td><a href="https://github.com/alexcorvi/heic2any" target="_blank" rel="noopener">heic2any</a></td><td>Lazy-loaded</td></tr>
+              <tr><td>QR codes</td><td><a href="https://github.com/davidshimjs/qrcodejs" target="_blank" rel="noopener">qrcode.js</a></td><td>Lazy-loaded</td></tr>
+              <tr><td>Persistence</td><td>localStorage</td><td>Theme, history, ratings, usage</td></tr>
+              <tr><td>PWA</td><td>Service Worker + Web App Manifest</td><td>Cache-first, offline support</td></tr>
+              <tr><td>Analytics</td><td>Microsoft Clarity</td><td>Session heatmaps only</td></tr>
+              <tr><td>Monetisation</td><td>Google AdSense</td><td>Display ads only</td></tr>
+              <tr><td>Hosting</td><td>Static file server</td><td>No server-side code required</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- KEYBOARD SHORTCUTS -->
+        <section class="dev-section" id="keyboard-shortcuts">
+          <h2>⌨️ Keyboard Shortcuts</h2>
+          <p>Available on all pages via <code>enhancements.js</code>:</p>
+
+          <div class="shortcut-list">
+            <div class="shortcut-item">
+              <div class="shortcut-desc">Focus the search bar</div>
+              <div class="shortcut-keys"><kbd>/</kbd></div>
+            </div>
+            <div class="shortcut-item">
+              <div class="shortcut-desc">Run primary tool action</div>
+              <div class="shortcut-keys"><kbd>Ctrl</kbd><span class="kbd-sep">+</span><kbd>Enter</kbd></div>
+            </div>
+            <div class="shortcut-item">
+              <div class="shortcut-desc">Close modals / overlays</div>
+              <div class="shortcut-keys"><kbd>Esc</kbd></div>
+            </div>
+            <div class="shortcut-item">
+              <div class="shortcut-desc">Toggle dark / light mode</div>
+              <div class="shortcut-keys"><span style="font-size:0.8rem;color:var(--text-muted)">Click 🌙 toggle</span></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- EMBEDDING -->
+        <section class="dev-section" id="embedding">
+          <h2>🔗 Embedding Tools via iframe</h2>
+          <p>Any FreeToolsPDF tool can be embedded in another website using an <code>&lt;iframe&gt;</code>. Because all processing is client-side, the tool works fully within the iframe context.</p>
+
+          <div class="dev-alert dev-alert-success">
+            <div>
+              <strong>Free to embed</strong>
+              <p>You're welcome to embed any tool on your blog, school portal, or educational site. Please keep the FreeToolsPDF branding visible for attribution.</p>
+            </div>
+          </div>
+
+          <h3>Basic Embed</h3>
+          <span class="code-label">HTML</span>
+          <pre><code><span class="kw">&lt;iframe</span>
+  <span class="key">src</span>=<span class="str">"https://pdftoolsfree.in/tools/attendance-calculator.html"</span>
+  <span class="key">width</span>=<span class="str">"100%"</span>
+  <span class="key">height</span>=<span class="str">"600"</span>
+  <span class="key">style</span>=<span class="str">"border:none;border-radius:12px"</span>
+  <span class="key">title</span>=<span class="str">"Attendance Calculator — FreeToolsPDF"</span>
+  <span class="key">loading</span>=<span class="str">"lazy"</span>
+<span class="kw">&gt;&lt;/iframe&gt;</span></code></pre>
+
+          <h3>Responsive Embed (recommended)</h3>
+          <span class="code-label">HTML + CSS</span>
+          <pre><code><span class="kw">&lt;style&gt;</span>
+  .ftpdf-embed-wrap {
+    position: relative; padding-bottom: 70%; height: 0; overflow: hidden;
+    border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  .ftpdf-embed-wrap iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;
+  }
+<span class="kw">&lt;/style&gt;</span>
+
+<span class="kw">&lt;div</span> <span class="key">class</span>=<span class="str">"ftpdf-embed-wrap"</span><span class="kw">&gt;</span>
+  <span class="kw">&lt;iframe</span>
+    <span class="key">src</span>=<span class="str">"https://pdftoolsfree.in/tools/merge-pdf.html"</span>
+    <span class="key">title</span>=<span class="str">"Merge PDF — FreeToolsPDF"</span>
+    <span class="key">loading</span>=<span class="str">"lazy"</span>
+  <span class="kw">&gt;&lt;/iframe&gt;</span>
+<span class="kw">&lt;/div&gt;</span></code></pre>
+
+          <h3>Available Tool URLs</h3>
+          <p>All tools follow the pattern: <code>https://pdftoolsfree.in/tools/&lt;tool-slug&gt;.html</code></p>
+          <p>Example slugs: <code>merge-pdf</code>, <code>compress-pdf</code>, <code>attendance-calculator</code>, <code>cgpa-calculator</code>, <code>resume-builder</code> — see the <a href="index.html#all-tools">full tool directory</a>.</p>
+        </section>
+
+        <!-- PWA -->
+        <section class="dev-section" id="pwa">
+          <h2>📲 PWA & Offline Support</h2>
+          <p>FreeToolsPDF is a Progressive Web App. It can be installed on mobile and desktop devices and works offline for previously visited pages.</p>
+
+          <h3>Service Worker Strategy</h3>
+          <p>The service worker (<code>sw.js</code>) uses a <strong>cache-first with background update</strong> (stale-while-revalidate) strategy:</p>
+
+          <span class="code-label">sw.js — fetch handler (simplified)</span>
+          <pre><code>self.addEventListener(<span class="str">'fetch'</span>, (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      <span class="kw">if</span> (cached) {
+        <span class="cmt">// Serve cached immediately</span>
+        fetch(event.request).then(res => cache.put(event.request, res)); <span class="cmt">// update bg</span>
+        <span class="kw">return</span> cached;
+      }
+      <span class="cmt">// Not cached — fetch and cache</span>
+      <span class="kw">return</span> fetch(event.request).then(res => {
+        cache.put(event.request, res.clone());
+        <span class="kw">return</span> res;
+      }).catch(() => caches.match(<span class="str">'/offline.html'</span>)); <span class="cmt">// fallback</span>
+    })
+  );
+});</code></pre>
+
+          <h3>Pre-cached Assets</h3>
+          <p>On install, the service worker pre-caches: <code>index.html</code>, all CSS/JS files, <code>offline.html</code>, and the PWA icons. Individual tool pages are cached on first visit.</p>
+
+          <h3>PWA Manifest</h3>
+          <span class="code-label">manifest.json</span>
+          <pre><code>{
+  <span class="key">"name"</span>: <span class="str">"FreeToolsPDF — Free PDF & Student Tools"</span>,
+  <span class="key">"short_name"</span>: <span class="str">"FreeToolsPDF"</span>,
+  <span class="key">"display"</span>: <span class="str">"standalone"</span>,
+  <span class="key">"start_url"</span>: <span class="str">"/"</span>,
+  <span class="key">"theme_color"</span>: <span class="str">"#2563EB"</span>,
+  <span class="key">"shortcuts"</span>: [
+    { <span class="key">"name"</span>: <span class="str">"Merge PDF"</span>, <span class="key">"url"</span>: <span class="str">"/tools/merge-pdf.html"</span> },
+    { <span class="key">"name"</span>: <span class="str">"Compress PDF"</span>, <span class="key">"url"</span>: <span class="str">"/tools/compress-pdf.html"</span> },
+    ...
+  ]
+}</code></pre>
+        </section>
+
+        <!-- localStorage -->
+        <section class="dev-section" id="localStorage">
+          <h2>💾 localStorage Keys</h2>
+          <p>FreeToolsPDF uses <code>localStorage</code> exclusively for client-side persistence. Here are all the keys used:</p>
+
+          <table class="feature-table">
+            <thead><tr><th>Key Pattern</th><th>Value Type</th><th>Purpose</th></tr></thead>
+            <tbody>
+              <tr><td><code>suh-theme</code></td><td><code>"light" | "dark"</code></td><td>User theme preference</td></tr>
+              <tr><td><code>suh-recent-tools</code></td><td>JSON array</td><td>Recently used tool objects (max 4)</td></tr>
+              <tr><td><code>suh-rating-{slug}</code></td><td>Number 1–5</td><td>User's star rating per tool</td></tr>
+              <tr><td><code>suh-usage-{slug}</code></td><td>Integer</td><td>Session count per tool</td></tr>
+              <tr><td><code>suh-pwa-dismissed</code></td><td><code>"1"</code></td><td>PWA install prompt dismissed</td></tr>
+              <tr><td><code>cookie-consent</code></td><td><code>"accepted" | "declined"</code></td><td>Cookie consent status</td></tr>
+            </tbody>
+          </table>
+
+          <div class="dev-alert dev-alert-info">
+            <div>
+              <strong>Reading data programmatically</strong>
+              <p>You can read any of these keys from the browser console: <code>JSON.parse(localStorage.getItem('suh-recent-tools'))</code></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- CONTRIBUTING -->
+        <section class="dev-section" id="contributing">
+          <h2>🤝 Contributing & Contact</h2>
+          <p>FreeToolsPDF is currently a closed-source project, but we warmly welcome feedback, bug reports, and tool suggestions.</p>
+
+          <h3>Report a Bug</h3>
+          <p>Found something broken? Please email us at <a href="mailto:pdftoolsfree.in@gmail.com">pdftoolsfree.in@gmail.com</a> with:</p>
+          <ul style="list-style:disc;padding-left:1.5rem;color:var(--text-secondary);font-size:0.9rem;line-height:1.8">
+            <li>The tool URL that's broken</li>
+            <li>Your browser and OS version</li>
+            <li>Steps to reproduce</li>
+            <li>Expected vs actual behaviour</li>
+          </ul>
+
+          <h3>Suggest a Tool</h3>
+          <p>Have an idea for a new tool that would help students or professionals? <a href="contact.html">Contact us</a> — we're always looking to expand the toolkit.</p>
+
+          <h3>Advertise</h3>
+          <p>Interested in reaching India's student demographic? <a href="about.html#advertise">See our advertising options</a>.</p>
+
+          <div class="dev-alert dev-alert-success">
+            <div>
+              <strong>Built with ❤️ for Indian Students</strong>
+              <p>FreeToolsPDF was created by a student, for students. It's completely free and will always remain so.</p>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /content -->
+    </div><!-- /dev-layout -->
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer" style="padding:var(--space-8) 0">
+  <div class="container"><div class="footer-bottom">
+    <p class="footer-bottom-text">© 2025 FreeToolsPDF · <a href="index.html" style="color:var(--primary)">← Back to Homepage</a></p>
+    <div class="footer-bottom-links">
+      <a href="about.html" class="footer-bottom-link">About</a>
+      <a href="privacy.html" class="footer-bottom-link">Privacy</a>
+      <a href="analytics.html" class="footer-bottom-link">Dashboard</a>
+      <a href="contact.html" class="footer-bottom-link">Contact</a>
+    </div>
+  </div></div>
+</footer>
+
+<script src="js/utils/toast.js"></script>
+<script src="js/components/Toggle.js"></script>
+<script src="js/utils/nav.js"></script>
+<script src="js/components/CookieBanner.js"></script>
+<script src="js/enhancements.js"></script>
+
+<script>
+  // Sidebar active link highlighting on scroll
+  const sections = document.querySelectorAll('.dev-section');
+  const links = document.querySelectorAll('.dev-sidebar-link');
+
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const id = entry.target.id;
+        const link = document.querySelector(`.dev-sidebar-link[href="#${id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+
+  sections.forEach(s => obs.observe(s));
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>lucide.createIcons();</script>
+</body>
+</html>

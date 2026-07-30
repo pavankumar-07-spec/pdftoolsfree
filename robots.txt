@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Sitemap: https://pdftoolsfree.in/sitemap.xml
+
+# Block internal utility files
+Disallow: /analytics.html
+Disallow: /api.html

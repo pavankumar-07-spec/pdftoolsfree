@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#1D4ED8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- App icon background -->
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+
+  <!-- Back sheet (offset, image tool) -->
+  <path d="M28 14H41L47 20V41C47 42.1046 46.1046 43 45 43H28C26.8954 43 26 42.1046 26 41V16C26 14.8954 26.8954 14 28 14Z"
+        fill="#ffffff" fill-opacity="0.28"/>
+
+  <!-- Front sheet (document, PDF tool) -->
+  <path d="M19 21H30L36 27V48C36 49.1046 35.1046 50 34 50H19C17.8954 50 17 49.1046 17 48V23C17 21.8954 17.8954 21 19 21Z"
+        fill="#ffffff"/>
+  <path d="M30 21V25C30 26.1046 30.8954 27 32 27H36" fill="none" stroke="#1D4ED8" stroke-width="1.6" stroke-linejoin="round"/>
+
+  <!-- Text lines on front sheet -->
+  <rect x="20.5" y="33" width="12" height="2.4" rx="1.2" fill="#93C5FD"/>
+  <rect x="20.5" y="38" width="12" height="2.4" rx="1.2" fill="#93C5FD"/>
+  <rect x="20.5" y="43" width="8" height="2.4" rx="1.2" fill="#93C5FD"/>
+
+  <!-- Accent dot: conversion / processing badge -->
+  <circle cx="47" cy="47" r="8" fill="#F59E0B"/>
+  <path d="M43.6 47L46.2 49.6L50.6 44.6" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

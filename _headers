@@ -1,0 +1,36 @@
+# Cloudflare Pages _headers file
+# https://developers.cloudflare.com/pages/configuration/headers/
+# This file is read automatically by Cloudflare Pages on deploy — no build step needed.
+
+# Only truly content-hashed assets get the year-long immutable cache
+# (e.g. /_assets/Header.CVjCZd0G.css — the hash in the filename changes
+# whenever the content changes, so "immutable" is safe here).
+/_assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/icons/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# /css/* and /js/* are PLAIN filenames (not content-hashed) that change
+# on every deploy — do not mark these immutable, or bug fixes will be
+# stuck in visitors' browsers/CDN edge for up to a year. Short cache +
+# revalidate lets fixes reach people quickly while still caching between
+# page loads.
+/css/*
+  Cache-Control: public, max-age=300, must-revalidate
+
+/js/*
+  Cache-Control: public, max-age=300, must-revalidate
+
+# HTML pages — short cache so content updates show up quickly without a full purge
+/*.html
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Baseline security headers for every page
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
