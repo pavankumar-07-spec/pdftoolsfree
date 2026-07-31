@@ -31,14 +31,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function getQRCodeLib() {
     if (window.QRCode) return window.QRCode;
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.src = '/js/vendor/qrcode.min.js';
       s.onload = () => resolve(window.QRCode);
-      s.onerror = () => resolve(null); // fallback to canvas matrix
+      s.onerror = () => {
+        const fallback = document.createElement('script');
+        fallback.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        fallback.onload = () => resolve(window.QRCode);
+        fallback.onerror = () => resolve(null);
+        document.head.appendChild(fallback);
+      };
       document.head.appendChild(s);
     });
   }
+
 
   async function calculate() {
     const text = document.getElementById('qrg-text') ? document.getElementById('qrg-text').value.trim() : 'https://pdftoolsfree.in';

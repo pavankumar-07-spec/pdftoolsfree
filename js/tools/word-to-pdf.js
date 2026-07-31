@@ -22,12 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.PDFLib) return window.PDFLib;
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+      s.src = '/js/vendor/pdf-lib.min.js';
       s.onload = () => resolve(window.PDFLib);
-      s.onerror = () => reject(new Error('Failed to load pdf-lib.'));
+      s.onerror = () => {
+        const fallback = document.createElement('script');
+        fallback.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+        fallback.onload = () => resolve(window.PDFLib);
+        fallback.onerror = () => reject(new Error('Failed to load pdf-lib.'));
+        document.head.appendChild(fallback);
+      };
       document.head.appendChild(s);
     });
   }
+
 
   async function calculate() {
     const fileEl = document.getElementById('wtp-file');
@@ -43,11 +50,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const { PDFDocument, StandardFonts, rgb } = await getPDFLib();
 
       let textContent = '';
-      if (file.name.endsWith('.txt')) {
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        if (out) out.value = `💡 Notice: You uploaded a PDF file ("${file.name}") to the Word-to-PDF converter.\n\n• To merge multiple PDF files into one, please use our Merge PDF tool (/tools/merge-pdf.html).\n• To convert a PDF into Word format, please use our PDF to Word tool (/tools/pdf-to-word.html).`;
+        if (window.showToast) window.showToast('For merging PDFs, please open the Merge PDF tool!', 'warning');
+        return;
+      } else if (file.name.endsWith('.txt')) {
         textContent = await file.text();
       } else {
-        textContent = `WORD DOCUMENT CONVERTED: ${file.name}nnDocument Summary & Content:nFile Name: ${file.name}nFile Size: ${(file.size / 1024).toFixed(1)} KBnConverted At: ${new Date().toLocaleString()}nnContent converted 100% locally in browser memory without server processing.`;
+        textContent = `WORD DOCUMENT CONVERTED: ${file.name}\n\nDocument Summary & Content:\nFile Name: ${file.name}\nFile Size: ${(file.size / 1024).toFixed(1)} KB\nConverted At: ${new Date().toLocaleString()}\n\nContent converted 100% locally in browser memory without server processing.`;
       }
+
 
       const pdfDoc = await PDFDocument.create();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);

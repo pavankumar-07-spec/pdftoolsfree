@@ -1,3 +1,6 @@
 /categories/web-seo.html /categories/developer-tools.html 301
 /categories/security-encryption.html /categories/developer-tools.html 301
-
+/tools/shadow-generator.html /tools/box-shadow-generator.html 301
+/tools/image-compressor.html /tools/batch-image-compress.html 301
+/tools/image-compressor /tools/batch-image-compress.html 301
+/tools/assignment-tracker /tools/assignment-tracker.html 301

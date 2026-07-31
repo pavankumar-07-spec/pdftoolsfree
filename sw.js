@@ -3,7 +3,7 @@
  * Provides 100% offline capability for all 407 client-side tools and assets
  */
 
-const CACHE_NAME = 'freetoolspdf-v3';
+const CACHE_NAME = 'freetoolspdf-v4';
 
 const STATIC_ASSETS = [
   '/',
@@ -16,11 +16,13 @@ const STATIC_ASSETS = [
   '/js/pwa-register.js',
   '/js/search-index.js',
   '/js/search-modal.js',
+  '/js/vendor/pdf-lib.min.js',
+  '/js/vendor/jspdf.umd.min.js',
+  '/js/vendor/qrcode.min.js',
   '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+  '/icons/icon-512.png'
 ];
+
 
 // Install Event — Precache essential static shell assets
 self.addEventListener('install', (event) => {

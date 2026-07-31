@@ -1699,10 +1699,43 @@
     });
   }
 
+  // --- Universal Download Fallback Handler ---
+  function initGlobalDownloadHandler() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('#download-btn');
+      if (btn) {
+        const mainOutput = document.getElementById('main-output');
+        const textToSave = mainOutput ? mainOutput.value : '';
+
+        if (textToSave && textToSave.trim().length > 0) {
+          const currentSlug = window.location.pathname.split('/').pop().replace('.html', '') || 'result';
+          const filename = `${currentSlug}-output-${Date.now()}.txt`;
+          if (typeof window.triggerDirectDownload === 'function') {
+            window.triggerDirectDownload(textToSave, filename, 'text/plain;charset=utf-8');
+          } else {
+            const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          }
+        }
+      }
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', autoloadComponents);
+    document.addEventListener('DOMContentLoaded', () => {
+      autoloadComponents();
+      initGlobalDownloadHandler();
+    });
   } else {
     autoloadComponents();
+    initGlobalDownloadHandler();
   }
 })();
+
 

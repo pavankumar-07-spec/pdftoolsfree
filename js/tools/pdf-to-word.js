@@ -22,12 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.PDFLib) return window.PDFLib;
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+      s.src = '/js/vendor/pdf-lib.min.js';
       s.onload = () => resolve(window.PDFLib);
-      s.onerror = () => reject(new Error('Failed to load pdf-lib.'));
+      s.onerror = () => {
+        const fallback = document.createElement('script');
+        fallback.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+        fallback.onload = () => resolve(window.PDFLib);
+        fallback.onerror = () => reject(new Error('Failed to load pdf-lib.'));
+        document.head.appendChild(fallback);
+      };
       document.head.appendChild(s);
     });
   }
+
 
   async function calculate() {
     const fileEl = document.getElementById('ptw-file');

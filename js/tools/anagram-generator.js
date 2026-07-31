@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let result = '';
-    result += `Input Word/Letters: "${cleanStr}"n`;
-    result += `Sorted Key: "${cleanStr.split('').sort().join('')}"nn`;
+    result += `Input Word/Letters: "${cleanStr}"\n`;
+    result += `Sorted Key: "${cleanStr.split('').sort().join('')}"\n\n`;
 
     // 1. Find matched valid anagrams from our list of words
     const sortedTarget = cleanStr.split('').sort().join('');
@@ -66,22 +66,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (matchedWords.length > 0) {
-      result += `✨ Found Valid Dictionary Anagrams:n`;
+      result += `✨ Found Valid Dictionary Anagrams:\n`;
       matchedWords.forEach(w => {
-        result += ` - ${w}n`;
+        result += ` - ${w}\n`;
       });
-      result += `n`;
+      result += `\n`;
     } else {
-      result += `ℹ️ No valid dictionary anagrams found in our database for "${cleanStr}".nn`;
+      result += `ℹ️ No valid dictionary anagrams found in our database for "${cleanStr}".\n\n`;
     }
 
     // 2. Generate rearrangements
     if (cleanStr.length <= 7) {
       const allPerms = getPermutations(cleanStr).filter(p => p !== cleanStr);
-      result += `🔄 All Possible Letter Permutations (${allPerms.length}):n`;
-      result += allPerms.join(', ') + 'n';
+      result += `🔄 All Possible Letter Permutations (${allPerms.length}):\n`;
+      result += allPerms.join(', ') + '\n';
     } else {
-      result += `🔄 Input is too long for complete permutations. Here are some random letter shuffles:n`;
+      result += `🔄 Input is too long for complete permutations. Here are some random letter shuffles:\n`;
       const shuffles = new Set();
       while (shuffles.size < 15) {
         const arr = cleanStr.split('');
@@ -94,14 +94,16 @@ document.addEventListener('DOMContentLoaded', () => {
           shuffles.add(candidate);
         }
       }
-      result += Array.from(shuffles).join(', ') + 'n';
+      result += Array.from(shuffles).join(', ') + '\n';
     }
 
     if (out) out.value = result;
     if (window.showToast) window.showToast('Anagrams generated!', 'success');
   }
 
-  const activeBtn = document.getElementById('calc-ag-btn') || btn;
+  const activeBtn = document.getElementById('calc-ag-btn') || btn || document.getElementById('generate-btn');
   if (activeBtn) activeBtn.addEventListener('click', calculate);
+  if (btn && btn !== activeBtn) btn.addEventListener('click', calculate);
   calculate();
+
 });

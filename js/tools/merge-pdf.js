@@ -22,16 +22,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.PDFLib) return window.PDFLib;
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+      s.src = '/js/vendor/pdf-lib.min.js';
       s.onload = () => resolve(window.PDFLib);
-      s.onerror = () => reject(new Error('Failed to load pdf-lib library.'));
+      s.onerror = () => {
+        const fallback = document.createElement('script');
+        fallback.src = 'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+        fallback.onload = () => resolve(window.PDFLib);
+        fallback.onerror = () => reject(new Error('Failed to load pdf-lib library.'));
+        document.head.appendChild(fallback);
+      };
       document.head.appendChild(s);
     });
   }
 
+
   async function calculate() {
-    const filesEl = document.getElementById('mpdf-files');
-    const files = filesEl ? Array.from(filesEl.files) : [];
+    const filesEl = document.getElementById('mpdf-files') || document.getElementById('pdf-file');
+    const files = filesEl && filesEl.files ? Array.from(filesEl.files) : [];
+
 
     if (files.length < 2) {
       if (out) out.value = 'ERROR: Please select at least 2 PDF files to merge.';

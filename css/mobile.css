@@ -131,34 +131,59 @@
     gap: 0.75rem 1.5rem;
   }
 
-  /* Result Card */
-  .result-value { font-size: 2.25rem; }
+  /* Result Card & Mobile Actions */
+  .result-value { font-size: 2rem; word-break: break-word; }
 
   .result-actions {
     flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
   }
   .result-actions .btn {
     width: 100%;
-  }
-
-  /* Forms */
-  .form-input, .form-select, .form-textarea {
-    font-size: 16px; /* Prevent zoom on iOS */
     min-height: 48px;
   }
 
-  /* Toast */
+  /* Forms & Touch Ergonomics */
+  .form-input, .form-select, .form-textarea {
+    font-size: 16px !important; /* Prevent iOS auto-zoom */
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  /* Mobile Search Modal Full-Screen Adaptation */
+  .search-modal-backdrop {
+    padding: 0 !important;
+  }
+  .search-modal-card {
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  /* Touch Tap Feedback */
+  .btn:active, .category-card:active, .tool-card:active, .option-pill:active, .nav-mobile-link:active, .search-cat-chip:active {
+    transform: scale(0.97) !important;
+    transition: transform 0.05s ease !important;
+  }
+
+  /* Toast Notifications on Mobile */
   .toast-container {
-    left: 1rem;
-    right: 1rem;
-    bottom: 1rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
   }
 
   .toast {
     min-width: unset;
     width: 100%;
+    padding: 0.85rem 1.15rem;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
   }
 }
+
 
 /* ============================================================
    MOBILE LANDSCAPE / SMALL TABLET (480px – 767px)

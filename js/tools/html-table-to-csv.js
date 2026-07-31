@@ -11,16 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const raw = inputEl ? inputEl.value : '';
     if (!raw.trim()) { if (out) out.value = ''; return; }
 
-    let table;
-    if (typeof DOMParser !== 'undefined') {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(raw, 'text/html');
-      table = doc.querySelector('table');
-    } else if (typeof document !== 'undefined' && document.createElement) {
-      const div = document.createElement('div');
-      div.innerHTML = raw;
-      table = (div.getElementsByTagName ? div.getElementsByTagName('table')[0] : null) || (div.querySelector ? div.querySelector('table') : null);
-    }
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(raw, 'text/html');
+    const table = doc.querySelector('table');
 
     if (!table) {
       if (out) out.value = '❌ No HTML <table> element found in input.';
@@ -32,14 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const cells = [...tr.querySelectorAll('th, td')];
       return cells.map(td => {
         let text = td.textContent.trim();
-        if (text.includes(',') || text.includes('"')) {
+        if (text.includes(',') || text.includes('"') || text.includes('\n')) {
           text = '"' + text.replace(/"/g, '""') + '"';
         }
         return text;
       }).join(',');
     });
 
-    const csvResult = csvLines.join('n');
+    const csvResult = csvLines.join('\n');
+
     if (out) out.value = csvResult;
     if (window.showToast) window.showToast('HTML Table converted to CSV!', 'success');
   }

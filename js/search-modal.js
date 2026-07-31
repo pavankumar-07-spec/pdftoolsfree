@@ -50,8 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedIndex = 0;
   let currentResults = [];
 
-  function getSearchIndex() {
-    return window.FREE_TOOLS_SEARCH_INDEX || [];
+  let worker = null;
+  try {
+    const pathPrefix = window.location.pathname.includes('/tools/') || window.location.pathname.includes('/categories/') ? '../' : '/';
+    worker = new Worker(`${pathPrefix}js/workers/search-worker.js`);
+    worker.postMessage({ type: 'INIT', pathPrefix });
+    worker.onmessage = (e) => {
+      if (e.data.type === 'SEARCH_RESULTS') {
+        currentResults = e.data.results;
+        renderSearchResultsDOM();
+      }
+    };
+  } catch (err) {
+    console.warn('[SearchModal] Web Worker fallback to main thread:', err);
   }
 
   function openModal() {
@@ -101,26 +112,34 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.style.color = '#fff';
       chip.classList.add('active');
       activeCategory = chip.getAttribute('data-cat');
-      renderResults(input.value);
+      renderResults(input ? input.value : '');
     });
   });
 
-  // Render Filtered Results
+  function getSearchIndex() {
+    return window.FREE_TOOLS_SEARCH_INDEX || [];
+  }
+
+
   function renderResults(query) {
-    const index = getSearchIndex();
-    const q = query.toLowerCase().trim();
+    if (worker) {
+      worker.postMessage({ type: 'SEARCH', query, activeCategory });
+    } else {
+      const index = getSearchIndex();
+      const q = query.toLowerCase().trim();
+      currentResults = index.filter(item => {
+        const matchCat = activeCategory === 'all' || item.categorySlug === activeCategory;
+        if (!matchCat) return false;
+        if (!q) return true;
+        return item.title.toLowerCase().includes(q) ||
+               item.slug.toLowerCase().includes(q) ||
+               item.description.toLowerCase().includes(q);
+      }).slice(0, 30);
+      renderSearchResultsDOM();
+    }
+  }
 
-    currentResults = index.filter(item => {
-      const matchCat = activeCategory === 'all' || item.categorySlug === activeCategory;
-      if (!matchCat) return false;
-
-      if (!q) return true;
-      const matchTitle = item.title.toLowerCase().includes(q);
-      const matchSlug = item.slug.toLowerCase().includes(q);
-      const matchDesc = item.description.toLowerCase().includes(q);
-      return matchTitle || matchSlug || matchDesc;
-    }).slice(0, 30); // Top 30 matches
-
+  function renderSearchResultsDOM() {
     selectedIndex = 0;
     countEl.textContent = `${currentResults.length} Result(s)`;
 
@@ -133,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       return;
     }
+
 
     resultsContainer.innerHTML = currentResults.map((item, idx) => `
       <a href="${item.url}" class="search-result-item ${idx === selectedIndex ? 'selected' : ''}" style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-radius:10px;text-decoration:none;color:var(--text);background:${idx === selectedIndex ? 'var(--surface-2, #f1f5f9)' : 'transparent'};transition:background 0.15s ease;">

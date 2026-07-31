@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const bytes = Array.from(enc.encode(code));
     const hexArr = bytes.map(b => 'x' + b.toString(16).padStart(2, '0')).join('');
 
-    return `(function(_0x1a2b,_0x3c4d){var _0x5e6f=function(_0x7a8b){return decodeURIComponent(escape(String.fromCharCode.apply(null,_0x7a8b)));};eval(_0x5e6f([${bytes.join(',')}]));})("${hexArr}");`;
+    return `(function(_0x1a2b,_0x3c4d){var _0x5e6f=function(_0x7a8b){return decodeURIComponent(escape(String.fromCharCode.apply(null,_0x7a8b)));};(new Function(_0x5e6f([${bytes.join(',')}])))();})(\"${hexArr}\");`;
   }
 
   function calculate() {
