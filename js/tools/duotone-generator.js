@@ -2,6 +2,8 @@
  * Duotone Generator Engine - Real HTML5 Canvas Pixel Processor
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const fileIn = document.getElementById('img-file');
   const shadowIn = document.getElementById('dt-shadow');
   const highlightIn = document.getElementById('dt-highlight');
@@ -128,4 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   applyDuotoneFilter();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

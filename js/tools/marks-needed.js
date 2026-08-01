@@ -2,6 +2,8 @@
  * Real Client-Side Target Marks Needed Calculator Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
@@ -59,4 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeBtn = document.getElementById('calc-mn-btn') || btn;
   if (activeBtn) activeBtn.addEventListener('click', calculate);
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

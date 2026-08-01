@@ -1,72 +1,46 @@
 /**
- * Vector Magnitude & Normalization Engine - B.Tech Level Math
+ * Vector Magnitude & Normalization Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
 
-  let inputV;
-
-  if (typeof VectorInput !== 'undefined' && inputsContainer) {
+  if (inputsContainer && !document.getElementById('v-a')) {
     inputsContainer.innerHTML = `
-      <div style="max-width:400px;margin-bottom:1rem">
-        <div id="vector-v-box"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div>
+          <label class="form-label">Vector A (x, y, z)</label>
+          <input type="text" id="v-a" class="form-input" value="1, 2, 3">
+        </div>
+        <div>
+          <label class="form-label">Vector B (x, y, z)</label>
+          <input type="text" id="v-b" class="form-input" value="4, 5, 6">
+        </div>
       </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-norm-btn" class="btn btn-primary flex-1">📏 Compute Magnitude & Unit Vector</button>
+      <div class="flex gap-3 mt-4">
+        <button id="calc-vec-btn" type="button" class="btn btn-primary flex-1">📐 Compute Vector Magnitude & Normalization</button>
       </div>
     `;
-    inputV = new VectorInput('vector-v-box', { label: 'Input Vector (v)', defaultDimension: 3 });
-    inputV.setData([3, 4, 12]);
   }
 
-  function parseVector(str) {
-    if (!str) return [];
-    return str.replace(/[^d.,-]/g, ' ').trim().split(/s+/).map(Number).filter(n => !isNaN(n));
-  }
-
-  function calculate() {
-    let v = [];
-    if (inputV) {
-      v = inputV.getData();
-    } else {
-      const textInput = document.getElementById('text-input');
-      v = parseVector(textInput ? textInput.value : '3, 4, 12');
-    }
-
-    if (v.length === 0) {
-      if (out) out.value = 'ERROR: Please enter a valid vector.';
-      return;
-    }
-
-    let sumSq = 0;
-    const squares = v.map(x => {
-      const sq = x * x;
-      sumSq += sq;
-      return `${x}²`;
-    });
-    const mag = Math.sqrt(sumSq);
-
-    if (mag === 0) {
-      if (out) out.value = 'ERROR: Magnitude is 0 (Zero vector cannot be normalized).';
-      return;
-    }
-
-    const unitVector = v.map(x => (x / mag).toFixed(6));
-
-    let res = '--- VECTOR MAGNITUDE & NORMALIZATION ---nn';
-    res += `Vector v = [${v.join(', ')}]nn`;
-    res += `Formula: ||v|| = √(${squares.join(' + ')})n`;
-    res += `||v|| = √(${sumSq}) = ${mag.toFixed(6)}nn`;
-    res += `Normalized Unit Vector (v̂ = v / ||v||):n`;
-    res += `v̂ = [${unitVector.join(', ')}]n`;
-
+  function compute() {
+    
+    const a = (document.getElementById('v-a')?.value || '3, 4, 0').split(',').map(n => parseFloat(n.trim()) || 0);
+    const mag = Math.sqrt(a.reduce((sum, n) => sum + n * n, 0));
+    const unit = mag > 0 ? a.map(n => (n / mag).toFixed(4)) : a;
+    let res = '==========================================================\n             VECTOR MAGNITUDE & UNIT VECTOR\n==========================================================\nVector V = [' + a.join(', ') + ']\n\nMagnitude ||V|| = ' + mag.toFixed(4) + '\nUnit Vector (v̂) = [' + unit.join(', ') + ']\n==========================================================';
     if (out) out.value = res;
-    if (window.showToast) window.showToast('Magnitude & Unit Vector computed!', 'success');
+    if (window.showToast) window.showToast('Magnitude ||V|| = ' + mag.toFixed(2), 'success');
+    
   }
 
-  const activeBtn = document.getElementById('calc-norm-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
+  const activeBtn = document.getElementById('calc-vec-btn') || btn;
+  if (activeBtn) activeBtn.onclick = () => compute();
+
+  compute();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

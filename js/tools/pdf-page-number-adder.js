@@ -2,6 +2,8 @@
  * Pdf Page Number Adder Engine - Deep SEO Alignment
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const fileIn = document.getElementById('pdf-file');
   const textIn = document.getElementById('pdf-text');
   const posIn = document.getElementById('pdf-position');
@@ -44,4 +46,6 @@ Status: Stamp overlay applied to all pages successfully!`;
     if (window.showToast) window.showToast('File downloaded successfully!', 'success');
     });
   }
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

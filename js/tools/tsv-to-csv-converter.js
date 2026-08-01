@@ -1,42 +1,35 @@
 /**
- * Tsv To Csv Converter Engine - Exact Tool Output
+ * TSV to CSV Converter Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const inputEl = document.getElementById('tsv-input');
-  const btn = document.getElementById('generate-btn');
-  const copyBtn = document.getElementById('copy-btn');
+  const ic = document.getElementById('tool-inputs-container');
   const out = document.getElementById('main-output');
-
-  function convertTsvToCsv() {
-    const raw = inputEl ? inputEl.value : '';
-    if (!raw.trim()) { if (out) out.value = ''; return; }
-
-    const lines = raw.split('n');
-    const csvLines = lines.map(line => {
-      const fields = line.split('t');
-      return fields.map(field => {
-        let f = field.trim();
-        if (f.includes(',') || f.includes('"') || f.includes('n')) {
-          f = '"' + f.replace(/"/g, '""') + '"';
-        }
-        return f;
-      }).join(',');
-    });
-
-    const csvOutput = csvLines.join('n');
-    if (out) out.value = csvOutput;
-    if (window.showToast) window.showToast('TSV converted to CSV!', 'success');
+  if (ic && !document.getElementById('tsv-input')) {
+    ic.innerHTML = `
+      <div style="margin-bottom:1rem">
+        <label class="form-label">TSV Input (Tab-Separated Values)</label>
+        <textarea id="tsv-input" class="form-input" rows="5" placeholder="Name\tAge\tCity">Name\tAge\tCity\nJohn\t25\tMumbai\nJane\t30\tDelhi</textarea>
+      </div>
+      <button id="calc-tsv-btn" class="btn btn-primary" style="width:100%">🔄 Convert TSV → CSV</button>
+    `;
   }
-
-  if (inputEl) inputEl.addEventListener('input', convertTsvToCsv);
-  if (btn) btn.addEventListener('click', convertTsvToCsv);
-  if (copyBtn) {
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(out ? out.value : '').then(() => {
-        if (window.showToast) window.showToast('Copied CSV to clipboard!', 'success');
-      });
-    });
+  function convert() {
+    try {
+      const input = document.getElementById('tsv-input')?.value || '';
+      const lines = input.split('\n');
+      const csv = lines.map(line => {
+        return line.split('\t').map(cell => {
+          if (cell.includes(',') || cell.includes('"')) return '"' + cell.replace(/"/g, '""') + '"';
+          return cell;
+        }).join(',');
+      }).join('\n');
+      const rowCount = lines.length;
+      const colCount = lines[0] ? lines[0].split('\t').length : 0;
+      if (out) out.value = csv;
+      if (window.showToast) window.showToast('Converted ' + rowCount + ' rows × ' + colCount + ' cols to CSV!', 'success');
+    } catch (e) { if (out) out.value = 'Error: ' + e.message; }
   }
-
-  if (inputEl && inputEl.value) convertTsvToCsv();
+  const b = document.getElementById('calc-tsv-btn') || document.getElementById('generate-btn');
+  if (b) b.onclick = convert;
+  convert();
 });

@@ -1,6 +1,6 @@
 /**
  * FreeToolsPDF Search Index
- * Auto-generated search index covering all 407 tools
+ * Auto-generated search index covering all 405 tools
  */
 window.FREE_TOOLS_SEARCH_INDEX = [
   {
@@ -1502,18 +1502,6 @@ window.FREE_TOOLS_SEARCH_INDEX = [
       "PDF Tools"
     ],
     "url": "/tools/pdf-watermark-adder.html"
-  },
-  {
-    "title": "PDF to Word",
-    "slug": "pdf-to-word",
-    "category": "PDF Tools",
-    "categorySlug": "pdf",
-    "description": "100% free client-side PDF to Word tool.",
-    "keywords": [
-      "pdf-to-word",
-      "PDF Tools"
-    ],
-    "url": "/tools/pdf-to-word.html"
   },
   {
     "title": "PDF to Text",
@@ -4850,18 +4838,6 @@ window.FREE_TOOLS_SEARCH_INDEX = [
       "PDF Tools"
     ],
     "url": "/tools/pdf-to-image.html"
-  },
-  {
-    "title": "Word To Pdf",
-    "slug": "word-to-pdf",
-    "category": "PDF Tools",
-    "categorySlug": "pdf",
-    "description": "100% free client-side Word To Pdf tool.",
-    "keywords": [
-      "word-to-pdf",
-      "PDF Tools"
-    ],
-    "url": "/tools/word-to-pdf.html"
   },
   {
     "title": "Qr Code Generator",

@@ -2,6 +2,8 @@
  * ID Card Template Generator Engine - Real-Time Live Canvas Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const nameIn = document.getElementById('id-name');
   const titleIn = document.getElementById('id-title');
   const numIn = document.getElementById('id-number');
@@ -153,4 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   drawCanvasBadge();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

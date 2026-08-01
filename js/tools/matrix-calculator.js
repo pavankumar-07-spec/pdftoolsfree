@@ -2,6 +2,8 @@
  * Matrix Calculator Engine - B.Tech Level Math
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   if (typeof MatrixInput === 'undefined') return;
 
   const inputA = new MatrixInput('matrix-a-container', { label: 'Matrix A', defaultRows: 3, defaultCols: 3 });
@@ -87,4 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

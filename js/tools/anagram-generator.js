@@ -1,109 +1,64 @@
 /**
- * Anagram Generator & Solver Engine
+ * Anagram Generator Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
 
-  // Let's enhance inputs if needed or just use text-input
-  const inputEl = document.getElementById('text-input');
-  if (inputEl) {
-    inputEl.placeholder = "e.g., silent or listen or a set of letters like 'aet'";
-    inputEl.value = "silent";
+  if (inputsContainer && !document.getElementById('ana-input')) {
+    inputsContainer.innerHTML = `
+      <div style="margin-bottom:1rem">
+        <label class="form-label">Input Word or Phrase</label>
+        <input type="text" id="ana-input" class="form-input" value="LISTEN">
+      </div>
+      <div class="flex gap-3 mt-4">
+        <button id="calc-ana-btn" type="button" class="btn btn-primary flex-1">🔤 Generate Anagram Permutations</button>
+      </div>
+    `;
   }
 
-  // Common english words to match against for a basic solver
-  const commonWords = [
-    "the", "of", "and", "a", "to", "in", "is", "you", "that", "it", "he", "was", "for", "on", "are", "as", "with", "his", "they", "i",
-    "at", "be", "this", "have", "from", "or", "one", "had", "by", "word", "but", "not", "what", "all", "were", "we", "when", "your", "can", "said",
-    "there", "use", "an", "each", "which", "she", "do", "how", "their", "if", "will", "up", "other", "about", "out", "many", "then", "them", "these", "so",
-    "some", "her", "would", "make", "like", "him", "into", "time", "has", "look", "two", "more", "write", "go", "see", "number", "no", "way", "could", "people",
-    "my", "than", "first", "water", "been", "called", "who", "am", "its", "now", "find", "long", "down", "day", "did", "get", "come", "made", "may", "part",
-    "silent", "listen", "enlist", "tinsel", "inlets", "earth", "heart", "hater", "rathe", "react", "cater", "crate", "trace", "stare", "tears", "rates", "aster",
-    "taser", "beard", "bread", "debar", "bared", "dares", "reads", "dear", "dare", "read", "bare", "bear", "cater", "least", "slate", "stale", "tales", "steal",
-    "acts", "cats", "cast", "lime", "mile", "elms", "limes", "miles", "slime", "smile", "melts", "night", "thing", "pears", "spear", "spare", "reaps", "parse",
-    "team", "meat", "tame", "mate", "range", "anger", "regna", "post", "stop", "pots", "tops", "opts", "spot", "flow", "wolf", "blow", "bowl", "loop", "pool"
-  ];
-
-  function getPermutations(str) {
+  function permute(str) {
     if (str.length <= 1) return [str];
-    const perms = new Set();
+    const results = new Set();
     for (let i = 0; i < str.length; i++) {
       const char = str[i];
       const remaining = str.slice(0, i) + str.slice(i + 1);
-      const subPerms = getPermutations(remaining);
-      for (const sub of subPerms) {
-        perms.add(char + sub);
+      for (const p of permute(remaining)) {
+        results.add(char + p);
       }
     }
-    return Array.from(perms);
+    return Array.from(results);
   }
 
-  function calculate() {
-    const raw = (document.getElementById('text-input')?.value || '').trim().toLowerCase();
-    if (!raw) {
-      if (out) out.value = '';
+  function generateAnagrams() {
+    const raw = (document.getElementById('ana-input')?.value || 'LISTEN').trim().toUpperCase().replace(/[^A-Z]/g, '');
+
+    if (!raw || raw.length > 8) {
+      if (out) out.value = 'ERROR: Please enter a word between 1 and 8 letters for performance.';
       return;
     }
 
-    // Strip non-alphabetic chars for processing
-    const cleanStr = raw.replace(/[^a-z]/g, '');
-    if (!cleanStr) {
-      if (out) out.value = 'Please enter text containing alphabetic characters.';
-      return;
-    }
+    const anagrams = permute(raw);
 
-    let result = '';
-    result += `Input Word/Letters: "${cleanStr}"\n`;
-    result += `Sorted Key: "${cleanStr.split('').sort().join('')}"\n\n`;
+    let report = `==========================================================
+               ANAGRAM PERMUTATION GENERATOR
+==========================================================
+Input Word:        "${raw}"
+Total Permutations: ${anagrams.length}
 
-    // 1. Find matched valid anagrams from our list of words
-    const sortedTarget = cleanStr.split('').sort().join('');
-    const matchedWords = commonWords.filter(w => {
-      if (w === cleanStr) return false; // don't count itself as anagram
-      return w.length === cleanStr.length && w.split('').sort().join('') === sortedTarget;
-    });
+ANAGRAM LIST:
+` + anagrams.join(', ');
 
-    if (matchedWords.length > 0) {
-      result += `✨ Found Valid Dictionary Anagrams:\n`;
-      matchedWords.forEach(w => {
-        result += ` - ${w}\n`;
-      });
-      result += `\n`;
-    } else {
-      result += `ℹ️ No valid dictionary anagrams found in our database for "${cleanStr}".\n\n`;
-    }
-
-    // 2. Generate rearrangements
-    if (cleanStr.length <= 7) {
-      const allPerms = getPermutations(cleanStr).filter(p => p !== cleanStr);
-      result += `🔄 All Possible Letter Permutations (${allPerms.length}):\n`;
-      result += allPerms.join(', ') + '\n';
-    } else {
-      result += `🔄 Input is too long for complete permutations. Here are some random letter shuffles:\n`;
-      const shuffles = new Set();
-      while (shuffles.size < 15) {
-        const arr = cleanStr.split('');
-        for (let i = arr.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        const candidate = arr.join('');
-        if (candidate !== cleanStr) {
-          shuffles.add(candidate);
-        }
-      }
-      result += Array.from(shuffles).join(', ') + '\n';
-    }
-
-    if (out) out.value = result;
-    if (window.showToast) window.showToast('Anagrams generated!', 'success');
+    if (out) out.value = report;
+    if (window.showToast) window.showToast(`Generated ${anagrams.length} anagrams!`, 'success');
   }
 
-  const activeBtn = document.getElementById('calc-ag-btn') || btn || document.getElementById('generate-btn');
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  if (btn && btn !== activeBtn) btn.addEventListener('click', calculate);
-  calculate();
+  const activeBtn = document.getElementById('calc-ana-btn');
+  if (activeBtn) activeBtn.onclick = () => generateAnagrams();
 
+  generateAnagrams();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

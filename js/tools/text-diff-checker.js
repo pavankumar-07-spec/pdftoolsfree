@@ -2,6 +2,8 @@
  * Text Diff & Line Comparison Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
@@ -67,4 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeBtn = document.getElementById('calc-tdc-btn') || btn;
   if (activeBtn) activeBtn.addEventListener('click', calculate);
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

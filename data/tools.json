@@ -1294,17 +1294,6 @@
       "featured": false
     },
     {
-      "id": "pdf-to-word",
-      "name": "PDF to Word",
-      "category": "PDF Tools",
-      "icon": "file-text",
-      "color": "var(--cat-pdf-light)",
-      "desc": "Free online pdf to word tool.",
-      "link": "tools/pdf-to-word.html",
-      "tags": [],
-      "featured": false
-    },
-    {
       "id": "pdf-to-text",
       "name": "PDF to Text",
       "category": "PDF Tools",
@@ -4590,18 +4579,6 @@
         "pdf-to-image"
       ],
       "link": "tools/pdf-to-image.html"
-    },
-    {
-      "id": "word-to-pdf",
-      "name": "Word To Pdf",
-      "desc": "100% client-side word to pdf tool. Process data securely and privately offline in your browser.",
-      "category": "PDF Tools",
-      "icon": "tool",
-      "color": "var(--cat-pdf-light)",
-      "tags": [
-        "word-to-pdf"
-      ],
-      "link": "tools/word-to-pdf.html"
     },
     {
       "id": "qr-code-generator",

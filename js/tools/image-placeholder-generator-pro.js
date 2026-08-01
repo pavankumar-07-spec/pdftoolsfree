@@ -2,6 +2,8 @@
  * Image Placeholder Generator Pro Engine - Exact Tool Output
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const wIn = document.getElementById('ph-width');
   const hIn = document.getElementById('ph-height');
   const textIn = document.getElementById('ph-text');
@@ -79,4 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderPlaceholder();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

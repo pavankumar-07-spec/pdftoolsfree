@@ -3,6 +3,8 @@
  * Uses pure JS CODE128 encoding algorithm for scannable barcode images
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
@@ -109,4 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const activeBtn = document.getElementById('calc-bcg-btn') || btn;
   if (activeBtn) activeBtn.addEventListener('click', calculate);
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

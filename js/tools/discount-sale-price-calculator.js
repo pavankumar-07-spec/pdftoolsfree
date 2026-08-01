@@ -1,32 +1,37 @@
 /**
- * Discount Sale Price Calculator Engine - Deep SEO Alignment
+ * Discount & Sale Price Calculator Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const amountIn = document.getElementById('calc-amount');
-  const rateIn = document.getElementById('calc-rate');
-  const modeIn = document.getElementById('calc-mode');
-  const btn = document.getElementById('generate-btn');
+  const ic = document.getElementById('tool-inputs-container');
   const out = document.getElementById('main-output');
-
-  function compute() {
-    const base = parseFloat(amountIn ? amountIn.value : 1000);
-    const rate = parseFloat(rateIn ? rateIn.value : 18);
-    const mode = modeIn ? modeIn.value : 'add';
-
-    const diff = (base * rate) / 100;
-    const finalAmount = mode === 'add' ? (base + diff) : (base - diff);
-
-    const summary = `--- DISCOUNT SALE PRICE CALCULATOR ANALYSIS ---
-Initial Base Amount: $${base.toFixed(2)}
-Applied Rate: ${rate}% (${mode === 'add' ? 'Addition' : 'Discount'})
-Tax / Margin Difference: $${diff.toFixed(2)}
-
-FINAL COMPUTED AMOUNT: $${finalAmount.toFixed(2)}`;
-
-    if (out) out.value = summary;
-    if (window.showToast) window.showToast('Calculation completed!', 'success');
+  if (ic && !document.getElementById('disc-orig')) {
+    ic.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div><label class="form-label">Original Price (₹/$)</label><input type="number" id="disc-orig" class="form-input" value="2499"></div>
+        <div><label class="form-label">Discount (%)</label><input type="number" id="disc-pct" class="form-input" value="20"></div>
+      </div>
+      <button id="calc-disc-btn" class="btn btn-primary" style="width:100%">🏷️ Calculate Sale Price</button>
+    `;
   }
-
-  if (btn) btn.addEventListener('click', compute);
-  compute();
+  function calc() {
+    try {
+      const orig = parseFloat(document.getElementById('disc-orig')?.value) || 0;
+      const pct = parseFloat(document.getElementById('disc-pct')?.value) || 0;
+      const discAmt = orig * (pct / 100);
+      const salePrice = orig - discAmt;
+      let r = '==========================================================\n';
+      r += '          DISCOUNT & SALE PRICE CALCULATOR\n';
+      r += '==========================================================\n';
+      r += 'Original Price:    ' + orig.toFixed(2) + '\n';
+      r += 'Discount:          ' + pct + '% (−' + discAmt.toFixed(2) + ')\n';
+      r += 'Sale Price:        ' + salePrice.toFixed(2) + '\n';
+      r += 'You Save:          ' + discAmt.toFixed(2) + '\n';
+      r += '==========================================================';
+      if (out) out.value = r;
+      if (window.showToast) window.showToast('Sale Price: ' + salePrice.toFixed(2) + ' (Save ' + discAmt.toFixed(2) + ')', 'success');
+    } catch (e) { if (out) out.value = 'Error: ' + e.message; }
+  }
+  const b = document.getElementById('calc-disc-btn') || document.getElementById('generate-btn');
+  if (b) b.onclick = calc;
+  calc();
 });

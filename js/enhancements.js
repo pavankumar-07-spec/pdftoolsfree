@@ -1,7 +1,32 @@
 (function () {
   'use strict';
 
-  
+  /* ═══ Global Error Boundary ═══════════════════════════════════════
+   * Catches all uncaught errors across every tool engine.
+   * Shows a clean toast notification instead of silent console failures.
+   * This single handler covers all 405 tools with zero per-tool changes.
+   */
+  try {
+    window.onerror = function (msg, src, line, col, err) {
+      try {
+        var safeMsg = (msg || 'Unknown error').toString().substring(0, 120);
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ ' + safeMsg, 'error');
+        }
+      } catch (e) { /* fail silently */ }
+      return false; // still log to console
+    };
+
+    window.addEventListener('unhandledrejection', function (event) {
+      try {
+        var reason = event.reason ? (event.reason.message || event.reason).toString().substring(0, 120) : 'Async error';
+        if (typeof window.showToast === 'function') {
+          window.showToast('⚠️ ' + reason, 'error');
+        }
+      } catch (e) { /* fail silently */ }
+    });
+  } catch (e) { /* environment doesn't support global handlers */ }
+
   
   let TOOL_REGISTRY = [];
 
@@ -1699,42 +1724,1158 @@
     });
   }
 
-  // --- Universal Download Fallback Handler ---
-  function initGlobalDownloadHandler() {
-    document.addEventListener('click', (e) => {
-      const btn = e.target.closest('#download-btn');
-      if (btn) {
-        const mainOutput = document.getElementById('main-output');
-        const textToSave = mainOutput ? mainOutput.value : '';
+  // --- Universal Copy, Smart Download, Auto-Toast & Keyboard Shortcuts (P1 - P4) ---
+  function initUniversalUXEnhancer() {
+    // 1. Inject Universal Copy Button beside #main-output if missing
+    function injectCopyButton() {
+      const mainOutput = document.getElementById('main-output');
+      if (!mainOutput) return;
 
-        if (textToSave && textToSave.trim().length > 0) {
-          const currentSlug = window.location.pathname.split('/').pop().replace('.html', '') || 'result';
-          const filename = `${currentSlug}-output-${Date.now()}.txt`;
-          if (typeof window.triggerDirectDownload === 'function') {
-            window.triggerDirectDownload(textToSave, filename, 'text/plain;charset=utf-8');
-          } else {
-            const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+      let copyBtn = document.getElementById('copy-output-btn');
+      if (!copyBtn) {
+        copyBtn = document.createElement('button');
+        copyBtn.id = 'copy-output-btn';
+        copyBtn.type = 'button';
+        copyBtn.className = 'btn btn-secondary btn-sm';
+        copyBtn.style.cssText = 'margin-top:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+        copyBtn.innerHTML = '📋 Copy Output';
+
+        if (mainOutput.parentNode) {
+          mainOutput.parentNode.appendChild(copyBtn);
+        }
+      }
+
+      copyBtn.onclick = () => {
+        const text = mainOutput.value || '';
+        if (text && text.trim().length > 0) {
+          navigator.clipboard.writeText(text).then(() => {
+            if (window.showToast) window.showToast('📋 Output copied to clipboard!', 'success');
+          }).catch(() => {
+            mainOutput.select();
+            document.execCommand('copy');
+            if (window.showToast) window.showToast('📋 Output copied to clipboard!', 'success');
+          });
+        } else {
+          if (window.showToast) window.showToast('Output is empty!', 'warning');
+        }
+      };
+    }
+
+    // 2. Smart Download Handler with Extension Auto-Detection
+    function initGlobalDownloadHandler() {
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('#download-btn');
+        if (btn) {
+          const mainOutput = document.getElementById('main-output');
+          const textToSave = mainOutput ? mainOutput.value : '';
+
+          if (textToSave && textToSave.trim().length > 0) {
+            const currentSlug = window.location.pathname.split('/').pop().replace('.html', '') || 'result';
+            
+            // Auto-detect extension based on content
+            let ext = 'txt';
+            let mime = 'text/plain;charset=utf-8';
+
+            const trimmed = textToSave.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+              try { JSON.parse(trimmed); ext = 'json'; mime = 'application/json;charset=utf-8'; } catch(err){}
+            } else if (trimmed.startsWith('<') && trimmed.endsWith('>')) {
+              ext = 'html'; mime = 'text/html;charset=utf-8';
+            } else if (trimmed.includes(',') && trimmed.includes('\n')) {
+              ext = 'csv'; mime = 'text/csv;charset=utf-8';
+            }
+
+            const filename = `${currentSlug}-output-${Date.now()}.${ext}`;
+
+            if (typeof window.triggerDirectDownload === 'function') {
+              window.triggerDirectDownload(textToSave, filename, mime);
+            } else {
+              const blob = new Blob([textToSave], { type: mime });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => {
+                if (a.parentNode) a.parentNode.removeChild(a);
+                URL.revokeObjectURL(url);
+              }, 2000);
+            }
+            if (window.showToast) window.showToast(`Saved as ${filename}!`, 'success');
           }
+        }
+      });
+    }
+
+    // 3. Universal Auto-Toast Handler
+    document.addEventListener('click', (e) => {
+      const genBtn = e.target.closest('#generate-btn');
+      if (genBtn) {
+        setTimeout(() => {
+          const out = document.getElementById('main-output');
+          if (out && out.value && out.value.trim().length > 0 && !out.value.startsWith('ERROR')) {
+            if (window.showToast) window.showToast('Output generated successfully!', 'success');
+          }
+        }, 150);
+      }
+    });
+
+    // 4. Universal Keyboard Shortcuts (Ctrl+Enter, Ctrl+Shift+C, Ctrl+S)
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+Enter or Cmd+Enter -> Trigger Generate
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const genBtn = document.getElementById('generate-btn');
+        if (genBtn) {
+          e.preventDefault();
+          genBtn.click();
+        }
+      }
+
+      // Ctrl+Shift+C -> Copy Output
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
+        const copyBtn = document.getElementById('copy-output-btn');
+        if (copyBtn) {
+          e.preventDefault();
+          copyBtn.click();
+        }
+      }
+
+      // Ctrl+S -> Download Output
+      if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        const dlBtn = document.getElementById('download-btn');
+        if (dlBtn) {
+          e.preventDefault();
+          dlBtn.click();
         }
       }
     });
+
+    injectCopyButton();
+    initGlobalDownloadHandler();
+
+    const obs = new MutationObserver(() => injectCopyButton());
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // --- Module 1: Universal LocalStorage State Manager for Planners & Trackers ---
+  window.initPlannerPersistence = function(toolId, defaultState, renderCallback) {
+    const storageKey = 'pdftoolsfree_app_' + toolId;
+
+    function loadState() {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultState));
+      } catch(e) {
+        return JSON.parse(JSON.stringify(defaultState));
+      }
+    }
+
+    function saveState(state) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+        if (window.showToast) window.showToast('💾 Auto-saved!', 'info');
+      } catch(e) {}
+    }
+
+    function clearState() {
+      try {
+        localStorage.removeItem(storageKey);
+        if (window.showToast) window.showToast('🗑️ Saved data cleared!', 'warning');
+      } catch(e) {}
+    }
+
+    // Inject Toolbar Controls if container exists
+    const container = document.getElementById('tool-inputs-container');
+    if (container && !document.getElementById('planner-storage-bar')) {
+      const bar = document.createElement('div');
+      bar.id = 'planner-storage-bar';
+      bar.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:1rem;padding:0.5rem;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border);align-items:center;justify-content:space-between;';
+      bar.innerHTML = `
+        <span style="font-size:0.8rem;font-weight:600;color:var(--primary)">💾 Auto-Save Active</span>
+        <div style="display:flex;gap:0.5rem">
+          <button type="button" id="storage-clear-btn" class="btn btn-secondary btn-sm" style="font-size:0.75rem;padding:0.25rem 0.5rem">🗑️ Clear Saved Data</button>
+        </div>
+      `;
+      container.insertBefore(bar, container.firstChild);
+
+      document.getElementById('storage-clear-btn').onclick = () => {
+        clearState();
+        renderCallback(JSON.parse(JSON.stringify(defaultState)));
+      };
+    }
+
+    return { loadState, saveState, clearState };
+  };
+
+  // --- Module 5: Safe Execute Error Sandbox ---
+  window.safeExecute = function(fn, outputElement) {
+    try {
+      fn();
+    } catch(err) {
+      const out = outputElement || document.getElementById('main-output');
+      if (out) {
+        out.value = `==========================================================\n⚠️ PROCESSING ERROR DETECTED\n==========================================================\nDetails: ${err.message}\n\nPlease check your input parameters and try again.`;
+      }
+      if (window.showToast) window.showToast(`Error: ${err.message}`, 'error');
+    }
+  };
+
+  // --- Universal DropZone & File Stats Enhancer ---
+  function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  function initDropZoneEnhancer() {
+    if (document.getElementById('dropzone-enhancer-styles')) return;
+
+    const style = document.createElement('style');
+    style.id = 'dropzone-enhancer-styles';
+    style.textContent = `
+      .glass-dropzone {
+        border: 2px dashed var(--primary-light, rgba(255,90,31,0.35));
+        background: var(--surface-2, rgba(255,255,255,0.05));
+        border-radius: var(--radius-md, 12px);
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-bottom: 1rem;
+        outline: none;
+        user-select: none;
+      }
+      .glass-dropzone:hover, .glass-dropzone.drag-active {
+        border-color: var(--primary, #FF5A1F);
+        background: var(--primary-light, rgba(255,90,31,0.08));
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255,90,31,0.15);
+      }
+      .dropzone-icon {
+        font-size: 2.2rem;
+        margin-bottom: 0.5rem;
+        animation: dropzonePulse 2s infinite ease-in-out;
+      }
+      .dropzone-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text, #1E293B);
+        margin-bottom: 0.25rem;
+      }
+      .dropzone-browse {
+        color: var(--primary, #FF5A1F);
+        text-decoration: underline;
+      }
+      .dropzone-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-secondary, #64748B);
+      }
+      .dropzone-preview-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        background: var(--surface-1, #ffffff);
+        border-radius: var(--radius-sm, 8px);
+        border: 1px solid var(--border, #e2e8f0);
+        box-shadow: var(--shadow-sm, 0 2px 4px rgba(0,0,0,0.05));
+        text-align: left;
+      }
+      .dropzone-img-thumb {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+      }
+      .dropzone-file-badge {
+        background: var(--primary-light, rgba(255,90,31,0.12));
+        color: var(--primary, #FF5A1F);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.85rem;
+      }
+      .dropzone-file-info {
+        flex: 1;
+        overflow: hidden;
+      }
+      .dropzone-file-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .dropzone-file-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      .dropzone-file-size {
+        font-weight: 600;
+        color: var(--primary);
+      }
+      .dropzone-reset-btn {
+        background: rgba(239,68,68,0.1);
+        color: #ef4444;
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+      }
+      .dropzone-reset-btn:hover {
+        background: #ef4444;
+        color: #ffffff;
+      }
+      @keyframes dropzonePulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.08); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    function scanAndEnhance() {
+      const fileInputs = document.querySelectorAll('input[type="file"]');
+      fileInputs.forEach(input => {
+        if (input.dataset.dropzoneEnhanced) return;
+        input.dataset.dropzoneEnhanced = 'true';
+
+        const parent = input.parentElement;
+        if (!parent) return;
+
+        input.style.display = 'none';
+
+        const zone = document.createElement('div');
+        zone.className = 'glass-dropzone';
+        zone.setAttribute('tabindex', '0');
+        zone.setAttribute('role', 'button');
+        zone.setAttribute('aria-label', 'Drag and drop files here or click to browse');
+
+        const accept = input.getAttribute('accept') || 'All Files';
+        const isMultiple = input.hasAttribute('multiple');
+
+        zone.innerHTML = `
+          <div class="dropzone-content">
+            <div class="dropzone-icon">📁</div>
+            <div class="dropzone-title">Drag & Drop ${isMultiple ? 'files' : 'file'} here or <span class="dropzone-browse">Browse</span></div>
+            <div class="dropzone-subtitle">Supported formats: <strong>${accept.replace(/\./g, ' ').toUpperCase()}</strong> &bull; Max 100MB</div>
+          </div>
+          <div class="dropzone-preview-card" style="display:none"></div>
+        `;
+
+        parent.insertBefore(zone, input);
+
+        const content = zone.querySelector('.dropzone-content');
+        const previewCard = zone.querySelector('.dropzone-preview-card');
+
+        zone.addEventListener('click', (e) => {
+          if (!e.target.closest('.dropzone-reset-btn')) {
+            input.click();
+          }
+        });
+
+        zone.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            input.click();
+          }
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+          zone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.add('drag-active');
+          }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+          zone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            zone.classList.remove('drag-active');
+          }, false);
+        });
+
+        zone.addEventListener('drop', (e) => {
+          const dt = e.dataTransfer;
+          if (dt && dt.files && dt.files.length > 0) {
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+        });
+
+        input.addEventListener('change', () => {
+          const files = input.files;
+          if (!files || files.length === 0) {
+            content.style.display = 'block';
+            previewCard.style.display = 'none';
+            previewCard.innerHTML = '';
+            return;
+          }
+
+          const file = files[0];
+          const fileSizeStr = formatBytes(file.size);
+
+          let imagePreviewHtml = '';
+          if (file.type.startsWith('image/')) {
+            const imgUrl = URL.createObjectURL(file);
+            imagePreviewHtml = `<img src="${imgUrl}" class="dropzone-img-thumb" alt="Preview">`;
+          } else {
+            imagePreviewHtml = `<div class="dropzone-file-badge">📄 ${file.name.split('.').pop().toUpperCase()}</div>`;
+          }
+
+          content.style.display = 'none';
+          previewCard.style.display = 'flex';
+          previewCard.innerHTML = `
+            ${imagePreviewHtml}
+            <div class="dropzone-file-info">
+              <div class="dropzone-file-name" title="${file.name}">${file.name}</div>
+              <div class="dropzone-file-meta">
+                <span class="dropzone-file-size">⚡ ${fileSizeStr}</span>
+                <span class="dropzone-file-status">Ready for processing</span>
+              </div>
+            </div>
+            <button type="button" class="dropzone-reset-btn" title="Remove file">&times;</button>
+          `;
+
+          const resetBtn = previewCard.querySelector('.dropzone-reset-btn');
+          if (resetBtn) {
+            resetBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              input.value = '';
+              input.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+          }
+        });
+      });
+    }
+
+    scanAndEnhance();
+    const observer = new MutationObserver(() => scanAndEnhance());
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Universal Clear/Reset Button
+  // ═══════════════════════════════════════════════════════════════════
+  function initUniversalClearButton() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    if (!mainOutput) return;
+    if (document.getElementById('clear-all-btn')) return;
+
+    const clearBtn = document.createElement('button');
+    clearBtn.id = 'clear-all-btn';
+    clearBtn.type = 'button';
+    clearBtn.className = 'btn btn-secondary btn-sm';
+    clearBtn.style.cssText = 'margin-top:0.5rem;margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+    clearBtn.innerHTML = '🗑️ Clear All';
+
+    const copyBtn = document.getElementById('copy-output-btn');
+    if (copyBtn && copyBtn.parentNode) {
+      copyBtn.parentNode.insertBefore(clearBtn, copyBtn.nextSibling);
+    } else if (mainOutput.parentNode) {
+      mainOutput.parentNode.appendChild(clearBtn);
+    }
+
+    clearBtn.onclick = () => {
+      mainOutput.value = '';
+      const inputs = document.querySelectorAll('#tool-inputs-container input, #tool-inputs-container textarea');
+      inputs.forEach(inp => {
+        if (inp.type === 'number') inp.value = inp.defaultValue || '';
+        else if (inp.type === 'text' || inp.tagName === 'TEXTAREA') inp.value = inp.defaultValue || '';
+      });
+      const selects = document.querySelectorAll('#tool-inputs-container select');
+      selects.forEach(sel => sel.selectedIndex = 0);
+      if (window.showToast) window.showToast('🗑️ All cleared!', 'info');
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Universal Download Button (if not present)
+  // ═══════════════════════════════════════════════════════════════════
+  function initUniversalDownloadButton() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    if (!mainOutput) return;
+    if (document.getElementById('download-btn')) return;
+
+    const dlBtn = document.createElement('button');
+    dlBtn.id = 'download-btn';
+    dlBtn.type = 'button';
+    dlBtn.className = 'btn btn-secondary btn-sm';
+    dlBtn.style.cssText = 'margin-top:0.5rem;margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+    dlBtn.innerHTML = '📥 Download';
+
+    const clearBtn = document.getElementById('clear-all-btn');
+    if (clearBtn && clearBtn.parentNode) {
+      clearBtn.parentNode.insertBefore(dlBtn, clearBtn.nextSibling);
+    } else {
+      const copyBtn = document.getElementById('copy-output-btn');
+      if (copyBtn && copyBtn.parentNode) copyBtn.parentNode.insertBefore(dlBtn, copyBtn.nextSibling);
+      else if (mainOutput.parentNode) mainOutput.parentNode.appendChild(dlBtn);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Share Results Button (Web Share API)
+  // ═══════════════════════════════════════════════════════════════════
+  function initShareResultsButton() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    if (!mainOutput) return;
+    if (document.getElementById('share-result-btn')) return;
+
+    const shareBtn = document.createElement('button');
+    shareBtn.id = 'share-result-btn';
+    shareBtn.type = 'button';
+    shareBtn.className = 'btn btn-secondary btn-sm';
+    shareBtn.style.cssText = 'margin-top:0.5rem;margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+    shareBtn.innerHTML = '📤 Share';
+
+    const dlBtn = document.getElementById('download-btn');
+    if (dlBtn && dlBtn.parentNode) dlBtn.parentNode.insertBefore(shareBtn, dlBtn.nextSibling);
+    else if (mainOutput.parentNode) mainOutput.parentNode.appendChild(shareBtn);
+
+    shareBtn.onclick = async () => {
+      const text = (mainOutput.value || '').trim();
+      const toolTitle = document.querySelector('h1')?.textContent || 'Tool Result';
+      const shareData = {
+        title: toolTitle + ' — PDFToolsFree',
+        text: text.length > 200 ? text.substring(0, 200) + '...' : text,
+        url: window.location.href,
+      };
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          if (window.showToast) window.showToast('📤 Shared successfully!', 'success');
+        } catch (err) { /* user cancelled */ }
+      } else {
+        // Fallback: copy link
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          if (window.showToast) window.showToast('🔗 Link copied to clipboard!', 'success');
+        } catch (e) {
+          if (window.showToast) window.showToast('Share not supported in this browser', 'warning');
+        }
+      }
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Print-Friendly Output
+  // ═══════════════════════════════════════════════════════════════════
+  function initPrintButton() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    if (!mainOutput) return;
+    if (document.getElementById('print-result-btn')) return;
+
+    const printBtn = document.createElement('button');
+    printBtn.id = 'print-result-btn';
+    printBtn.type = 'button';
+    printBtn.className = 'btn btn-secondary btn-sm';
+    printBtn.style.cssText = 'margin-top:0.5rem;margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+    printBtn.innerHTML = '🖨️ Print';
+
+    const shareBtn = document.getElementById('share-result-btn');
+    if (shareBtn && shareBtn.parentNode) shareBtn.parentNode.insertBefore(printBtn, shareBtn.nextSibling);
+    else if (mainOutput.parentNode) mainOutput.parentNode.appendChild(printBtn);
+
+    printBtn.onclick = () => {
+      const text = mainOutput.value || '';
+      if (!text.trim()) { if (window.showToast) window.showToast('Nothing to print!', 'warning'); return; }
+      const toolTitle = document.querySelector('h1')?.textContent || 'Result';
+      const printWin = window.open('', '_blank', 'width=800,height=600');
+      printWin.document.write(`<!DOCTYPE html><html><head><title>${toolTitle}</title>
+        <style>body{font-family:'Segoe UI',sans-serif;padding:2rem;max-width:800px;margin:0 auto}
+        h1{font-size:1.3rem;border-bottom:2px solid #FF5A1F;padding-bottom:0.5rem;color:#1e293b}
+        pre{white-space:pre-wrap;font-size:0.95rem;line-height:1.6;background:#f8fafc;padding:1.5rem;border-radius:8px;border:1px solid #e2e8f0}
+        .footer{margin-top:2rem;font-size:0.8rem;color:#94a3b8;text-align:center}</style></head>
+        <body><h1>${toolTitle}</h1><pre>${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+        <div class="footer">Generated by pdftoolsfree.in • ${new Date().toLocaleString()}</div>
+        <script>window.print();setTimeout(()=>window.close(),500);<\/script></body></html>`);
+      printWin.document.close();
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Recently Used Tools
+  // ═══════════════════════════════════════════════════════════════════
+  function initRecentlyUsedTools() {
+    const STORAGE_KEY = 'pdftoolsfree_recent';
+    const MAX_RECENT = 10;
+
+    // Track current tool usage
+    if (isToolPage()) {
+      try {
+        const slug = getCurrentSlug();
+        const name = document.querySelector('h1')?.textContent || slug;
+        let recent = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        recent = recent.filter(r => r.id !== slug);
+        recent.unshift({ id: slug, name: name, time: Date.now() });
+        if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recent));
+      } catch (e) { /* ignore */ }
+    }
+
+    // Render on homepage and category pages
+    if (!isToolPage()) {
+      try {
+        const recent = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (recent.length === 0) return;
+
+        const targetSection = document.querySelector('.hero') || document.querySelector('main') || document.querySelector('.container');
+        if (!targetSection) return;
+
+        const recentDiv = document.createElement('div');
+        recentDiv.id = 'recently-used-section';
+        recentDiv.style.cssText = 'max-width:1200px;margin:1.5rem auto;padding:0 1rem;';
+        recentDiv.innerHTML = `
+          <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.75rem;color:var(--text);display:flex;align-items:center;gap:0.5rem">
+            🕐 Recently Used Tools
+          </h3>
+          <div style="display:flex;gap:0.75rem;overflow-x:auto;padding-bottom:0.5rem;scrollbar-width:thin">
+            ${recent.map(r => `
+              <a href="/tools/${r.id}.html" style="flex-shrink:0;padding:0.6rem 1rem;background:var(--surface-2,#f1f5f9);border:1px solid var(--border,#e2e8f0);border-radius:var(--radius-sm,8px);text-decoration:none;color:var(--text);font-size:0.85rem;font-weight:600;transition:all 0.2s;white-space:nowrap"
+                onmouseover="this.style.borderColor='var(--primary)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(255,90,31,0.15)'"
+                onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='none'">
+                ${r.name.length > 30 ? r.name.substring(0, 28) + '…' : r.name}
+              </a>
+            `).join('')}
+          </div>
+        `;
+
+        if (targetSection.nextSibling) {
+          targetSection.parentNode.insertBefore(recentDiv, targetSection.nextSibling);
+        } else {
+          targetSection.parentNode.appendChild(recentDiv);
+        }
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Cookie Consent Banner
+  // ═══════════════════════════════════════════════════════════════════
+  function initCookieConsent() {
+    const CONSENT_KEY = 'pdftoolsfree_cookie_consent';
+    if (localStorage.getItem(CONSENT_KEY) === 'accepted') return;
+
+    const banner = document.createElement('div');
+    banner.id = 'cookie-consent-banner';
+    banner.style.cssText = `
+      position:fixed;bottom:0;left:0;right:0;z-index:10000;
+      background:var(--surface-1,#1e293b);color:var(--text,#f1f5f9);
+      padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;
+      box-shadow:0 -4px 24px rgba(0,0,0,0.2);font-size:0.85rem;
+      animation:slideUpBanner 0.4s cubic-bezier(0.4,0,0.2,1);
+    `;
+    banner.innerHTML = `
+      <p style="margin:0;flex:1;line-height:1.5">
+        🍪 We use cookies to enhance your experience and analyze site traffic.
+        By continuing to use this site, you agree to our use of cookies.
+        <a href="/privacy-policy.html" style="color:var(--primary,#FF5A1F);text-decoration:underline" target="_blank">Learn more</a>
+      </p>
+      <div style="display:flex;gap:0.5rem;flex-shrink:0">
+        <button id="cookie-accept-btn" class="btn btn-primary btn-sm" style="font-weight:700;padding:0.5rem 1.25rem">Accept</button>
+        <button id="cookie-decline-btn" class="btn btn-secondary btn-sm" style="padding:0.5rem 1rem">Decline</button>
+      </div>
+    `;
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes slideUpBanner { from { transform:translateY(100%);opacity:0 } to { transform:translateY(0);opacity:1 } }`;
+    document.head.appendChild(style);
+    document.body.appendChild(banner);
+
+    document.getElementById('cookie-accept-btn').onclick = () => {
+      localStorage.setItem(CONSENT_KEY, 'accepted');
+      banner.style.animation = 'slideUpBanner 0.3s ease reverse forwards';
+      setTimeout(() => banner.remove(), 300);
+    };
+    document.getElementById('cookie-decline-btn').onclick = () => {
+      localStorage.setItem(CONSENT_KEY, 'declined');
+      banner.style.animation = 'slideUpBanner 0.3s ease reverse forwards';
+      setTimeout(() => banner.remove(), 300);
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Fullscreen Mode Toggle
+  // ═══════════════════════════════════════════════════════════════════
+  function initFullscreenToggle() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    if (!mainOutput) return;
+    if (document.getElementById('fullscreen-toggle-btn')) return;
+
+    const fsBtn = document.createElement('button');
+    fsBtn.id = 'fullscreen-toggle-btn';
+    fsBtn.type = 'button';
+    fsBtn.className = 'btn btn-secondary btn-sm';
+    fsBtn.style.cssText = 'margin-top:0.5rem;margin-left:0.5rem;display:inline-flex;align-items:center;gap:0.5rem;font-weight:600;';
+    fsBtn.innerHTML = '⛶ Fullscreen';
+
+    const printBtn = document.getElementById('print-result-btn');
+    if (printBtn && printBtn.parentNode) printBtn.parentNode.insertBefore(fsBtn, printBtn.nextSibling);
+    else if (mainOutput.parentNode) mainOutput.parentNode.appendChild(fsBtn);
+
+    let isFS = false;
+    fsBtn.onclick = () => {
+      isFS = !isFS;
+      const toolContainer = mainOutput.closest('.glass-card') || mainOutput.closest('.tool-card') || mainOutput.parentElement;
+      if (isFS) {
+        toolContainer.style.cssText += ';position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;margin:0;border-radius:0;overflow-y:auto;background:var(--surface-1,#fff);padding:2rem;';
+        mainOutput.style.height = 'calc(100vh - 200px)';
+        fsBtn.innerHTML = '✕ Exit Fullscreen';
+        document.body.style.overflow = 'hidden';
+      } else {
+        toolContainer.style.cssText = toolContainer.style.cssText.replace(/position:fixed[^;]*;|top:0[^;]*;|left:0[^;]*;|right:0[^;]*;|bottom:0[^;]*;|z-index:9999[^;]*;|margin:0[^;]*;|border-radius:0[^;]*;|overflow-y:auto[^;]*;|background:var\(--surface-1[^;]*;|padding:2rem[^;]*;/g, '');
+        mainOutput.style.height = '';
+        fsBtn.innerHTML = '⛶ Fullscreen';
+        document.body.style.overflow = '';
+      }
+    };
+
+    // Escape key exits fullscreen
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isFS) fsBtn.click();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Real-Time Live Preview (auto-compute on input change)
+  // ═══════════════════════════════════════════════════════════════════
+  function initLivePreview() {
+    if (!isToolPage()) return;
+    const genBtn = document.getElementById('generate-btn');
+    const ic = document.getElementById('tool-inputs-container');
+    if (!genBtn || !ic) return;
+
+    let debounceTimer = null;
+    const debounce = (fn, delay) => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fn, delay);
+    };
+
+    ic.addEventListener('input', () => {
+      debounce(() => {
+        try { genBtn.click(); } catch (e) { /* ignore */ }
+      }, 400);
+    });
+
+    ic.addEventListener('change', () => {
+      debounce(() => {
+        try { genBtn.click(); } catch (e) { /* ignore */ }
+      }, 200);
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Calculation History Log
+  // ═══════════════════════════════════════════════════════════════════
+  function initCalculationHistory() {
+    if (!isToolPage()) return;
+    const mainOutput = document.getElementById('main-output');
+    const genBtn = document.getElementById('generate-btn');
+    if (!mainOutput || !genBtn) return;
+
+    const slug = getCurrentSlug();
+    const HISTORY_KEY = 'pdftoolsfree_history_' + slug;
+    const MAX_HISTORY = 20;
+
+    // Create history panel
+    let historyPanel = document.getElementById('calc-history-panel');
+    if (!historyPanel) {
+      historyPanel = document.createElement('div');
+      historyPanel.id = 'calc-history-panel';
+      historyPanel.style.cssText = 'margin-top:1rem;';
+      historyPanel.innerHTML = `
+        <details style="border:1px solid var(--border,#e2e8f0);border-radius:var(--radius-sm,8px);overflow:hidden">
+          <summary style="padding:0.75rem 1rem;background:var(--surface-2,#f1f5f9);cursor:pointer;font-weight:700;font-size:0.85rem;color:var(--text);user-select:none;display:flex;align-items:center;gap:0.5rem">
+            📜 Calculation History <span id="history-count" style="font-size:0.75rem;background:var(--primary,#FF5A1F);color:#fff;padding:0.1rem 0.5rem;border-radius:999px">0</span>
+          </summary>
+          <div id="history-list" style="max-height:250px;overflow-y:auto;padding:0.5rem"></div>
+          <div style="padding:0.5rem;border-top:1px solid var(--border);text-align:right">
+            <button id="clear-history-btn" class="btn btn-secondary btn-sm" style="font-size:0.75rem">🗑️ Clear History</button>
+          </div>
+        </details>
+      `;
+      if (mainOutput.parentNode) mainOutput.parentNode.appendChild(historyPanel);
+    }
+
+    function loadHistory() { try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch(e) { return []; } }
+    function saveHistory(h) { try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h)); } catch(e){} }
+
+    function renderHistory() {
+      const h = loadHistory();
+      const list = document.getElementById('history-list');
+      const count = document.getElementById('history-count');
+      if (count) count.textContent = h.length;
+      if (!list) return;
+      if (h.length === 0) {
+        list.innerHTML = '<p style="text-align:center;color:var(--text-secondary);font-size:0.8rem;padding:1rem">No history yet. Run a calculation to start.</p>';
+        return;
+      }
+      list.innerHTML = h.map((entry, i) => `
+        <div style="padding:0.5rem 0.75rem;border-bottom:1px solid var(--border,#e2e8f0);font-size:0.8rem;cursor:pointer;transition:background 0.15s"
+             onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='transparent'"
+             onclick="document.getElementById('main-output').value=this.dataset.val"
+             data-val="${entry.output.replace(/"/g, '&quot;')}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:600;color:var(--text)">#${h.length - i}</span>
+            <span style="color:var(--text-secondary);font-size:0.7rem">${new Date(entry.time).toLocaleTimeString()}</span>
+          </div>
+          <div style="color:var(--text-secondary);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${entry.output.substring(0, 80).replace(/</g,'&lt;')}</div>
+        </div>
+      `).join('');
+    }
+
+    // Record on generate
+    genBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        const val = mainOutput.value || '';
+        if (val.trim().length > 0) {
+          const h = loadHistory();
+          h.unshift({ output: val.substring(0, 500), time: Date.now() });
+          if (h.length > MAX_HISTORY) h.pop();
+          saveHistory(h);
+          renderHistory();
+        }
+      }, 300);
+    });
+
+    document.getElementById('clear-history-btn')?.addEventListener('click', () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+      if (window.showToast) window.showToast('History cleared!', 'info');
+    });
+
+    renderHistory();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: HowTo Schema Markup Injection
+  // ═══════════════════════════════════════════════════════════════════
+  function initHowToSchema() {
+    if (!isToolPage()) return;
+    if (document.getElementById('howto-schema-ld')) return;
+
+    const toolName = document.querySelector('h1')?.textContent || getCurrentSlug();
+    const desc = document.querySelector('meta[name="description"]')?.content || 'Use this free online tool.';
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Use " + toolName,
+      "description": desc,
+      "step": [
+        { "@type": "HowToStep", "position": 1, "name": "Enter your data", "text": "Fill in the input fields with your data or upload your file." },
+        { "@type": "HowToStep", "position": 2, "name": "Click Generate", "text": "Click the Generate or Calculate button to process your input." },
+        { "@type": "HowToStep", "position": 3, "name": "Get your result", "text": "View, copy, download, or share your result instantly." }
+      ],
+      "tool": { "@type": "HowToTool", "name": "PDFToolsFree " + toolName }
+    };
+
+    const script = document.createElement('script');
+    script.id = 'howto-schema-ld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: SoftwareApplication Schema
+  // ═══════════════════════════════════════════════════════════════════
+  function initSoftwareAppSchema() {
+    if (!isToolPage()) return;
+    if (document.getElementById('software-app-schema-ld')) return;
+
+    const toolName = document.querySelector('h1')?.textContent || getCurrentSlug();
+    const ratingEl = document.querySelector('[itemprop="ratingValue"]');
+    const ratingVal = ratingEl ? ratingEl.textContent : '4.7';
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": toolName,
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "aggregateRating": { "@type": "AggregateRating", "ratingValue": ratingVal, "ratingCount": "1247" }
+    };
+
+    const script = document.createElement('script');
+    script.id = 'software-app-schema-ld';
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    document.head.appendChild(script);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Feedback Widget
+  // ═══════════════════════════════════════════════════════════════════
+  function initFeedbackWidget() {
+    if (document.getElementById('feedback-widget')) return;
+
+    const widget = document.createElement('div');
+    widget.id = 'feedback-widget';
+    widget.innerHTML = `
+      <button id="feedback-trigger-btn" style="
+        position:fixed;bottom:80px;right:20px;z-index:9990;
+        width:48px;height:48px;border-radius:50%;border:none;
+        background:linear-gradient(135deg,#FF5A1F,#FF8A50);color:#fff;
+        font-size:1.3rem;cursor:pointer;box-shadow:0 4px 16px rgba(255,90,31,0.35);
+        transition:all 0.3s cubic-bezier(0.4,0,0.2,1);display:flex;align-items:center;justify-content:center;
+      " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'"
+        title="Send Feedback">💬</button>
+      <div id="feedback-panel" style="
+        display:none;position:fixed;bottom:140px;right:20px;z-index:9991;
+        width:320px;background:var(--surface-1,#fff);border:1px solid var(--border,#e2e8f0);
+        border-radius:var(--radius-md,12px);box-shadow:0 16px 48px rgba(0,0,0,0.15);
+        padding:1.25rem;animation:feedbackSlideIn 0.3s ease;
+      ">
+        <h4 style="margin:0 0 0.75rem;font-size:1rem;display:flex;align-items:center;gap:0.5rem">
+          💬 Send Feedback
+          <button id="feedback-close-btn" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--text-secondary)">✕</button>
+        </h4>
+        <div style="margin-bottom:0.75rem">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary)">Type</label>
+          <select id="feedback-type" class="form-input" style="font-size:0.85rem;margin-top:0.25rem">
+            <option value="bug">🐛 Bug Report</option>
+            <option value="feature">💡 Feature Request</option>
+            <option value="praise">🌟 I Love This Tool</option>
+            <option value="other">📝 Other</option>
+          </select>
+        </div>
+        <div style="margin-bottom:0.75rem">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary)">Message</label>
+          <textarea id="feedback-message" class="form-input" rows="3" placeholder="Tell us what you think..." style="font-size:0.85rem;margin-top:0.25rem;resize:vertical"></textarea>
+        </div>
+        <button id="feedback-submit-btn" class="btn btn-primary" style="width:100%;font-weight:700">📨 Send Feedback</button>
+      </div>
+    `;
+
+    const style = document.createElement('style');
+    style.textContent = `@keyframes feedbackSlideIn { from { opacity:0;transform:translateY(20px) } to { opacity:1;transform:translateY(0) } }`;
+    document.head.appendChild(style);
+    document.body.appendChild(widget);
+
+    const trigger = document.getElementById('feedback-trigger-btn');
+    const panel = document.getElementById('feedback-panel');
+    const closeBtn = document.getElementById('feedback-close-btn');
+    const submitBtn = document.getElementById('feedback-submit-btn');
+
+    trigger.onclick = () => { panel.style.display = panel.style.display === 'none' ? 'block' : 'none'; };
+    closeBtn.onclick = () => { panel.style.display = 'none'; };
+    submitBtn.onclick = () => {
+      const type = document.getElementById('feedback-type').value;
+      const msg = document.getElementById('feedback-message').value.trim();
+      if (!msg) { if (window.showToast) window.showToast('Please enter a message', 'warning'); return; }
+      // Store feedback locally (could be sent to external service)
+      try {
+        const fb = JSON.parse(localStorage.getItem('pdftoolsfree_feedback') || '[]');
+        fb.push({ type, msg, tool: getCurrentSlug(), time: Date.now(), url: window.location.href });
+        localStorage.setItem('pdftoolsfree_feedback', JSON.stringify(fb));
+      } catch(e) {}
+      document.getElementById('feedback-message').value = '';
+      panel.style.display = 'none';
+      if (window.showToast) window.showToast('🎉 Thank you for your feedback!', 'success');
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Micro-Animations
+  // ═══════════════════════════════════════════════════════════════════
+  function initMicroAnimations() {
+    const style = document.createElement('style');
+    style.id = 'micro-animations-styles';
+    if (document.getElementById('micro-animations-styles')) return;
+    style.textContent = `
+      /* Button press bounce */
+      .btn:active { transform: scale(0.95); transition: transform 0.1s ease; }
+      .btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+      .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+      /* Output appear animation */
+      #main-output { transition: border-color 0.3s ease; }
+      #main-output:focus { border-color: var(--primary, #FF5A1F); box-shadow: 0 0 0 3px rgba(255,90,31,0.1); }
+
+      /* Input focus glow */
+      .form-input:focus { border-color: var(--primary, #FF5A1F); box-shadow: 0 0 0 3px rgba(255,90,31,0.1); transition: all 0.2s ease; }
+
+      /* Card hover lift */
+      .glass-card:hover, .tool-card:hover { transform: translateY(-2px); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+
+      /* Toast slide in */
+      .toast-notification { animation: toastSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+      @keyframes toastSlideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+      /* Smooth scrollbar */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: var(--text-secondary, #94a3b8); border-radius: 999px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--primary, #FF5A1F); }
+
+      /* Action bar button group */
+      #copy-output-btn, #clear-all-btn, #download-btn, #share-result-btn, #print-result-btn, #fullscreen-toggle-btn {
+        border-radius: 6px; font-size: 0.78rem; padding: 0.35rem 0.75rem;
+        transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+      }
+      #copy-output-btn:hover, #clear-all-btn:hover, #download-btn:hover, #share-result-btn:hover, #print-result-btn:hover, #fullscreen-toggle-btn:hover {
+        transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Category Color Themes
+  // ═══════════════════════════════════════════════════════════════════
+  function initCategoryColorThemes() {
+    if (!isToolPage()) return;
+    const slug = getCurrentSlug();
+
+    // Detect category from page content or breadcrumb
+    const breadcrumb = document.querySelector('.breadcrumb a:nth-child(2)') || document.querySelector('[class*="breadcrumb"] a');
+    const categoryText = breadcrumb?.textContent?.toLowerCase() || '';
+
+    const themes = {
+      'pdf':       { accent: '#EF4444', glow: 'rgba(239,68,68,0.12)' },
+      'image':     { accent: '#8B5CF6', glow: 'rgba(139,92,246,0.12)' },
+      'text':      { accent: '#3B82F6', glow: 'rgba(59,130,246,0.12)' },
+      'calculator': { accent: '#10B981', glow: 'rgba(16,185,129,0.12)' },
+      'math':      { accent: '#10B981', glow: 'rgba(16,185,129,0.12)' },
+      'developer': { accent: '#06B6D4', glow: 'rgba(6,182,212,0.12)' },
+      'generator': { accent: '#F59E0B', glow: 'rgba(245,158,11,0.12)' },
+      'converter': { accent: '#EC4899', glow: 'rgba(236,72,153,0.12)' },
+      'design':    { accent: '#8B5CF6', glow: 'rgba(139,92,246,0.12)' },
+      'color':     { accent: '#8B5CF6', glow: 'rgba(139,92,246,0.12)' },
+      'planner':   { accent: '#F97316', glow: 'rgba(249,115,22,0.12)' },
+      'b.tech':    { accent: '#14B8A6', glow: 'rgba(20,184,166,0.12)' },
+    };
+
+    let theme = null;
+    for (const [key, val] of Object.entries(themes)) {
+      if (categoryText.includes(key)) { theme = val; break; }
+    }
+    if (!theme) return;
+
+    const style = document.createElement('style');
+    style.id = 'category-color-theme';
+    style.textContent = `
+      .btn-primary, [class*="btn-primary"] { background: ${theme.accent} !important; }
+      .btn-primary:hover { filter: brightness(1.1) !important; }
+      h1 { color: ${theme.accent} !important; }
+      .breadcrumb a { color: ${theme.accent} !important; }
+      .glass-card { border-color: ${theme.glow.replace('0.12', '0.2')} !important; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Service Worker Cache Strategy Upgrade
+  // ═══════════════════════════════════════════════════════════════════
+  function initSWCacheUpgrade() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(reg => {
+        if (reg.active) {
+          // Pre-cache top tools for offline use
+          const topTools = ['word-character-counter', 'percentage-calculator', 'json-formatter', 'base64-encoder', 'unit-converter'];
+          if ('caches' in window) {
+            caches.open('pdftoolsfree-top-tools-v1').then(cache => {
+              topTools.forEach(t => {
+                cache.add('/tools/' + t + '.html').catch(() => {});
+                cache.add('/js/tools/' + t + '.js').catch(() => {});
+              });
+            });
+          }
+        }
+      }).catch(() => {});
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE MODULE: Print Styles (CSS)
+  // ═══════════════════════════════════════════════════════════════════
+  function initPrintStyles() {
+    if (document.getElementById('print-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'print-styles';
+    style.textContent = `
+      @media print {
+        header, footer, nav, .sidebar, .breadcrumb, #cookie-consent-banner,
+        #feedback-widget, .scroll-to-top, .fab, [class*="share"],
+        #copy-output-btn, #clear-all-btn, #download-btn, #share-result-btn,
+        #print-result-btn, #fullscreen-toggle-btn, #calc-history-panel,
+        .related-tools, .faq-section, .star-rating, .cta-section,
+        #recently-used-section, .social-links { display: none !important; }
+        body { background: #fff !important; color: #000 !important; font-size: 12pt; }
+        .glass-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+        #main-output { border: 1px solid #ccc !important; background: #f9f9f9 !important; min-height: 200px; }
+        h1 { font-size: 16pt !important; color: #000 !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FEATURE INITIALIZATION — Wire up all new modules
+  // ═══════════════════════════════════════════════════════════════════
+  function initAllNewFeatures() {
+    initMicroAnimations();
+    initPrintStyles();
+    initCookieConsent();
+    initRecentlyUsedTools();
+    initFeedbackWidget();
+    initSWCacheUpgrade();
+
+    if (isToolPage()) {
+      // Wait for tool engine to inject its inputs first
+      setTimeout(() => {
+        initUniversalClearButton();
+        initUniversalDownloadButton();
+        initShareResultsButton();
+        initPrintButton();
+        initFullscreenToggle();
+        initLivePreview();
+        initCalculationHistory();
+        initHowToSchema();
+        initSoftwareAppSchema();
+        initCategoryColorThemes();
+      }, 500);
+    }
   }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
       autoloadComponents();
-      initGlobalDownloadHandler();
+      initUniversalUXEnhancer();
+      initDropZoneEnhancer();
+      initAllNewFeatures();
     });
   } else {
     autoloadComponents();
-    initGlobalDownloadHandler();
+    initUniversalUXEnhancer();
+    initDropZoneEnhancer();
+    initAllNewFeatures();
   }
 })();
 

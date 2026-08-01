@@ -2,6 +2,8 @@
  * GPA PREDICTOR - Real Calculation Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const v1 = document.getElementById('ac-val1');
   const v2 = document.getElementById('ac-val2');
   const input = document.getElementById('main-input');
@@ -73,4 +75,6 @@ Status: ${percentageNeeded >= 40 ? 'Passing Mark Attainable' : 'High Effort Requ
   }
 
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

@@ -2,6 +2,8 @@
  * Matrix Cramers Rule Solver Engine - B.Tech Level Math
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
@@ -94,4 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const activeBtn = document.getElementById('calc-cramer-btn') || btn;
   if (activeBtn) activeBtn.addEventListener('click', calculate);
   if (inputA) calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

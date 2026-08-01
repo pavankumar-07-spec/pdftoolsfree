@@ -2,6 +2,8 @@
  * Pdf Batch Compress Engine - Deep SEO Alignment
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const fileIn = document.getElementById('pdf-file');
   const qualityIn = document.getElementById('pdf-quality');
   const btn = document.getElementById('generate-btn');
@@ -63,4 +65,6 @@ Status: Processed locally in-browser. Zero server uploads.`;
       if (window.showToast) window.showToast('Downloaded compressed document!', 'success');
     });
   }
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

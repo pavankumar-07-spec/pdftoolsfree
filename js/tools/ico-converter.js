@@ -2,6 +2,8 @@
  * Real Client-Side ICO Favicon & Icon Converter Engine (Canvas + ICO binary exporter)
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
@@ -73,4 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const activeBtn = document.getElementById('calc-icoc-btn') || btn;
   if (activeBtn) activeBtn.addEventListener('click', calculate);
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

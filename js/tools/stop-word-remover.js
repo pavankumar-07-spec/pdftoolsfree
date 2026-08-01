@@ -2,6 +2,8 @@
  * Stop Word Remover Engine - Exact Tool Output
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputEl = document.getElementById('stop-input');
   const btn = document.getElementById('generate-btn');
   const copyBtn = document.getElementById('copy-btn');
@@ -35,4 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (inputEl && inputEl.value) removeStopWords();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

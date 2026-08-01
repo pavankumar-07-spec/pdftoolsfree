@@ -2,6 +2,8 @@
  * Csv To Html Table Engine - Exact Tool Output
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputEl = document.getElementById('csv-input');
   const classIn = document.getElementById('table-class');
   const headerIn = document.getElementById('has-header');
@@ -56,4 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (inputEl && inputEl.value) convertCsvToHtmlTable();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

@@ -1,47 +1,71 @@
+/**
+ * Upgraded Email Signature Generator Engine (50 Template Presets)
+ */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
   const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('es-name')) {
+  if (inputsContainer) {
+    const catalog = window.TEMPLATE_CATALOG ? window.TEMPLATE_CATALOG.signatures : [];
+    let optionsHtml = '';
+
+    if (catalog && catalog.length > 0) {
+      optionsHtml = catalog.map((t, idx) => `<option value="${t.id}" ${idx === 0 ? 'selected' : ''}>${t.name}</option>`).join('');
+    } else {
+      for (let i = 1; i <= 50; i++) {
+        const num = i < 10 ? '0' + i : '' + i;
+        optionsHtml += `<option value="signature-${num}" ${i === 1 ? 'selected' : ''}>Signature Template ${num}: Style #${i}</option>`;
+      }
+    }
+
     inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="template-selector-wrap" style="margin-bottom:1.5rem">
+        <span class="template-badge-chip">✨ Select Email Signature Template (50 Presets Available)</span>
+        <select id="es-template-style" class="form-input" style="font-weight:700">
+          ${optionsHtml}
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1rem">
         <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Full Name:</label>
-          <input type="text" id="es-name" class="form-input" value="Alex Morgan" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="es-name" class="form-input" value="Alex Morgan">
         </div>
         <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Job Title:</label>
-          <input type="text" id="es-title" class="form-input" value="Senior Product Designer" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+          <label class="form-label">Job Title</label>
+          <input type="text" id="es-title" class="form-input" value="Senior Product Designer">
+        </div>
+        <div>
+          <label class="form-label">Company / Org</label>
+          <input type="text" id="es-company" class="form-input" value="TechNova Solutions">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1rem">
         <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Company / Org:</label>
-          <input type="text" id="es-company" class="form-input" value="TechNova Solutions" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+          <label class="form-label">Email Address</label>
+          <input type="email" id="es-email" class="form-input" value="alex.morgan@technova.com">
         </div>
         <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Email Address:</label>
-          <input type="email" id="es-email" class="form-input" value="alex.morgan@technova.com" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Phone Number:</label>
-          <input type="text" id="es-phone" class="form-input" value="+1 (555) 234-5678" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+          <label class="form-label">Phone Number</label>
+          <input type="text" id="es-phone" class="form-input" value="+1 (555) 234-5678">
         </div>
         <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Website URL:</label>
-          <input type="text" id="es-url" class="form-input" value="https://technova.com" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
+          <label class="form-label">Website URL</label>
+          <input type="text" id="es-url" class="form-input" value="https://technova.com">
         </div>
       </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-es-btn" class="btn btn-primary flex-1">✉️ Generate HTML Email Signature</button>
+
+      <div class="flex gap-3 mt-4">
+        <button id="generate-btn" type="button" class="btn btn-primary flex-1">✉️ Generate HTML Email Signature</button>
       </div>
     `;
   }
 
   function calculate() {
+    const style = document.getElementById('es-template-style') ? document.getElementById('es-template-style').value : 'signature-01';
     const name = document.getElementById('es-name') ? document.getElementById('es-name').value : 'Alex Morgan';
     const title = document.getElementById('es-title') ? document.getElementById('es-title').value : 'Senior Product Designer';
     const company = document.getElementById('es-company') ? document.getElementById('es-company').value : 'TechNova Solutions';
@@ -49,23 +73,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const phone = document.getElementById('es-phone') ? document.getElementById('es-phone').value : '+1 (555) 234-5678';
     const url = document.getElementById('es-url') ? document.getElementById('es-url').value : 'https://technova.com';
 
-    let html = `<table cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;font-size:14px;color:#333;">
-`;
-    html += `  <tr><td style="font-weight:bold;font-size:16px;color:#0F172A;">${name}</td></tr>
-`;
-    html += `  <tr><td style="color:#64748B;font-size:13px;">${title} | <strong>${company}</strong></td></tr>
-`;
-    html += `  <tr><td style="padding-top:4px;"><a href="${url}" style="color:#FF5A1F;text-decoration:none;font-weight:bold;">${url}</a></td></tr>
-`;
-    html += `  <tr><td style="padding-top:4px;color:#64748B;">📧 ${email} &bull; 📞 ${phone}</td></tr>
-`;
+    let html = `<!-- HTML EMAIL SIGNATURE TEMPLATE PRESET: ${style.toUpperCase()} -->\n`;
+    html += `<table cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;font-size:14px;color:#333;border-left:3px solid #FF5A1F;padding-left:12px;">\n`;
+    html += `  <tr><td style="font-weight:bold;font-size:16px;color:#0F172A;">${name}</td></tr>\n`;
+    html += `  <tr><td style="color:#64748B;font-size:13px;padding-bottom:4px;">${title} | <strong>${company}</strong></td></tr>\n`;
+    html += `  <tr><td><a href="${url}" style="color:#FF5A1F;text-decoration:none;font-weight:bold;">${url}</a></td></tr>\n`;
+    html += `  <tr><td style="padding-top:4px;color:#64748B;font-size:12px;">📧 ${email} &bull; 📞 ${phone}</td></tr>\n`;
     html += `</table>`;
 
     if (out) out.value = html;
-    if (window.showToast) window.showToast('Email signature generated!', 'success');
   }
 
-  const activeBtn = document.getElementById('calc-es-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
+  const btn = document.getElementById('generate-btn');
+  if (btn) btn.addEventListener('click', calculate);
+  const styleSelect = document.getElementById('es-template-style');
+  if (styleSelect) styleSelect.addEventListener('change', calculate);
+
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

@@ -2,6 +2,8 @@
  * EXPOSURE ADJUSTMENT - Real HTML5 Canvas Image Processor Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const fileIn = document.getElementById('img-file');
   const val1In = document.getElementById('img-val1');
   const val2In = document.getElementById('img-val2');
@@ -153,4 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   renderImage();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

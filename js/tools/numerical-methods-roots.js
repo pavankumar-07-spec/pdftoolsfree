@@ -2,6 +2,8 @@
  * Numerical Root Finder Engine
  */
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const funcIn = document.getElementById('func-input');
   const methodIn = document.getElementById('method-select');
   const btn = document.getElementById('generate-btn');
@@ -45,4 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btn) btn.addEventListener('click', solve);
   solve();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

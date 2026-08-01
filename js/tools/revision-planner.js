@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+  try {
+
   const inputsContainer = document.getElementById('tool-inputs-container');
   const out = document.getElementById('main-output');
 
@@ -31,4 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('revision-planner-calc-btn')?.addEventListener('click', calculate);
   calculate();
+
+  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
 });

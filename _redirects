@@ -4,3 +4,8 @@
 /tools/image-compressor.html /tools/batch-image-compress.html 301
 /tools/image-compressor /tools/batch-image-compress.html 301
 /tools/assignment-tracker /tools/assignment-tracker.html 301
+
+/tools/pdf-to-word.html /tools/pdf-to-text.html 301
+/tools/pdf-to-word /tools/pdf-to-text.html 301
+/tools/word-to-pdf.html /categories/pdf.html 301
+/tools/word-to-pdf /categories/pdf.html 301
