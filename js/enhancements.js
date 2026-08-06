@@ -2860,7 +2860,42 @@
         initHowToSchema();
         initSoftwareAppSchema();
         initCategoryColorThemes();
+        initCountUpAnimation();
       }, 500);
+    }
+  }
+
+  function initCountUpAnimation() {
+    const els = document.querySelectorAll('[data-count]');
+    if (!els.length) return;
+
+    function animate(el) {
+      const target = parseInt(el.dataset.count, 10) || 515;
+      const suffix = el.dataset.suffix || '';
+      const duration = 1200;
+      const start = performance.now();
+
+      function step(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - t, 3);
+        el.textContent = Math.round(ease * target) + suffix;
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
+    if (typeof IntersectionObserver !== 'undefined') {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            animate(entry.target);
+            obs.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1 });
+      els.forEach(el => obs.observe(el));
+    } else {
+      els.forEach(animate);
     }
   }
 
@@ -2870,12 +2905,14 @@
       initUniversalUXEnhancer();
       initDropZoneEnhancer();
       initAllNewFeatures();
+      initCountUpAnimation();
     });
   } else {
     autoloadComponents();
     initUniversalUXEnhancer();
     initDropZoneEnhancer();
     initAllNewFeatures();
+    initCountUpAnimation();
   }
 })();
 
