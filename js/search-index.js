@@ -2,7 +2,7 @@
  * FreeToolsPDF Search Index
  * Auto-generated search index covering all 515 tools
  */
-window.FREE_TOOLS_SEARCH_INDEX = [
+(typeof window !== 'undefined' ? window : self).FREE_TOOLS_SEARCH_INDEX = [
   {
     "title": "Acoustic Noise Attenuation Distance Calculator",
     "slug": "acoustic-noise-attenuation-distance-calculator",

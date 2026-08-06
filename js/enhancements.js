@@ -1623,7 +1623,7 @@
     }
   }
 
-  init();
+  injectMultiLanguageSelector();
 })();
 
 /**
