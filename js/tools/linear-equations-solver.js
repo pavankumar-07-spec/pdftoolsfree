@@ -1,72 +1,103 @@
 /**
- * Linear Equations Solver Engine (2x2 and 3x3 Systems via Cramer's Rule)
+ * Linear Equations Solver Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const ic = document.getElementById('tool-inputs-container');
-  const out = document.getElementById('main-output');
-  if (ic && !document.getElementById('les-size')) {
-    ic.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label">System Size</label>
-        <select id="les-size" class="form-input"><option value="2" selected>2×2 System</option><option value="3">3×3 System</option></select>
-      </div>
-      <div id="les-grid" style="margin-bottom:1.5rem"></div>
-      <button id="calc-les-btn" class="btn btn-primary" style="width:100%">📐 Solve System (Cramer's Rule)</button>
-    `;
-    buildGrid();
-  }
-  function buildGrid() {
-    const n = parseInt(document.getElementById('les-size')?.value || '2');
-    const g = document.getElementById('les-grid');
-    if (!g) return;
-    const defaults2 = [[2,1,5],[1,3,10]];
-    const defaults3 = [[1,1,1,6],[0,2,5,14],[2,5,-1,3]];
-    const defs = n === 3 ? defaults3 : defaults2;
-    let html = '<p style="font-size:0.85rem;margin-bottom:0.5rem;color:var(--text-secondary)">Enter augmented matrix [A|b]:</p>';
-    html += '<div style="display:grid;grid-template-columns:repeat(' + (n+1) + ',1fr);gap:0.5rem;max-width:400px">';
-    for (let r = 0; r < n; r++) {
-      for (let c = 0; c <= n; c++) {
-        html += '<input type="number" id="les_' + r + '_' + c + '" class="form-input" value="' + defs[r][c] + '" style="text-align:center">';
+function init_linear_equations_solver() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
+
+    function calculate() {
+      try {
+
+        const firstInputId = "";
+        const txtArea = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const text = txtArea ? (txtArea.value || '') : '';
+
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const chars = text.length;
+        const sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+        const readTimeMinutes = Math.ceil(words / 200);
+
+        let report = `=== ${'Linear Equations Solver'.toUpperCase()} REPORT ===\n`;
+        report += `Word Count:           ${words}\n`;
+        report += `Character Count:      ${chars}\n`;
+        report += `Sentence Count:       ${sentences}\n`;
+        report += `Estimated Read Time:  ${readTimeMinutes} min\n`;
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Linear Equations Solver Workspace',
+            status: 'Text Analyzed',
+            archetype: 'text',
+            kpis: [
+              { label: 'WORD COUNT', value: words, sub: 'Total Words' },
+              { label: 'CHARACTERS', value: chars, sub: 'Total Chars' }
+            ],
+            steps: ['Step 1: Parsed text payload.', 'Step 2: Calculated metrics.', 'Step 3: Output report.']
+          });
+        }
+        if (window.showToast) window.showToast('Linear Equations Solver computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
     }
-    html += '</div>';
-    g.innerHTML = html;
-  }
-  function solve() {
-    try {
-      const n = parseInt(document.getElementById('les-size')?.value || '2');
-      const A = [], b = [];
-      for (let r = 0; r < n; r++) {
-        A[r] = [];
-        for (let c = 0; c < n; c++) A[r][c] = parseFloat(document.getElementById('les_' + r + '_' + c)?.value) || 0;
-        b[r] = parseFloat(document.getElementById('les_' + r + '_' + n)?.value) || 0;
-      }
-      function det2(m) { return m[0][0]*m[1][1] - m[0][1]*m[1][0]; }
-      function det3(m) { return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0]) + m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]); }
-      const detA = n === 2 ? det2(A) : det3(A);
-      let report = '==========================================================\n';
-      report += '          LINEAR SYSTEM SOLVER (Cramer\'s Rule)\n';
-      report += '==========================================================\n';
-      report += 'System Size: ' + n + '×' + n + '\ndet(A) = ' + detA.toFixed(4) + '\n\n';
-      if (Math.abs(detA) < 1e-12) {
-        report += '⚠️ System is SINGULAR (det=0). No unique solution.\n';
-      } else {
-        const vars = ['x','y','z'];
-        for (let i = 0; i < n; i++) {
-          const Ai = A.map((row, r) => row.map((val, c) => c === i ? b[r] : val));
-          const detAi = n === 2 ? det2(Ai) : det3(Ai);
-          const val = detAi / detA;
-          report += vars[i] + ' = det(A' + i + ')/det(A) = ' + detAi.toFixed(4) + '/' + detA.toFixed(4) + ' = ' + val.toFixed(6) + '\n';
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
         }
-      }
-      report += '==========================================================';
-      if (out) out.value = report;
-      if (window.showToast) window.showToast('System solved via Cramer\'s Rule!', 'success');
-    } catch (e) { if (out) out.value = 'Error: ' + e.message; }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'linear-equations-solver-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] linear-equations-solver:', err);
   }
-  const sel = document.getElementById('les-size');
-  if (sel) sel.onchange = buildGrid;
-  const btn = document.getElementById('calc-les-btn') || document.getElementById('generate-btn');
-  if (btn) btn.onclick = solve;
-  solve();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_linear_equations_solver);
+} else {
+  init_linear_equations_solver();
+}

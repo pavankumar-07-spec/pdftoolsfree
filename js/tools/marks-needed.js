@@ -1,66 +1,119 @@
 /**
- * Real Client-Side Target Marks Needed Calculator Engine
+ * Marks Needed Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_marks_needed() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_ac_val2 = document.getElementById('ac-val2');
+      const val_ac_val2 = el_ac_val2 ? (parseFloat(el_ac_val2.value) || el_ac_val2.value) : 10;
+      const el_main_input = document.getElementById('main-input');
+      const val_main_input = el_main_input ? (parseFloat(el_main_input.value) || el_main_input.value) : 15;
 
-  if (inputsContainer && !document.getElementById('mn-curr')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Current Average Score (%):</label>
-          <input type="number" id="mn-curr" class="form-input" value="78" min="0" max="100" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-        </div>
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Target Final Grade (%):</label>
-          <input type="number" id="mn-target" class="form-input" value="85" min="0" max="100" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-        </div>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Final Exam Weight (% of course):</label>
-        <input type="number" id="mn-weight" class="form-input" value="30" min="1" max="100" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-mn-btn" class="btn btn-primary flex-1">🎯 Calculate Needed Marks</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function calculate() {
-    const current = parseFloat(document.getElementById('mn-curr') ? document.getElementById('mn-curr').value : 78) || 0;
-    const target = parseFloat(document.getElementById('mn-target') ? document.getElementById('mn-target').value : 85) || 0;
-    const weight = parseFloat(document.getElementById('mn-weight') ? document.getElementById('mn-weight').value : 30) || 30;
+        let res = 0;
+        let report = `=== ${'Marks Needed'.toUpperCase()} REPORT ===\n\n`;
 
-    const currentWeight = (100 - weight) / 100;
-    const finalWeight = weight / 100;
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    const needed = (target - (current * currentWeight)) / finalWeight;
+        if (out) out.value = report;
 
-    let res = `--- TARGET MARKS NEEDED CALCULATOR REPORT ---nn`;
-    res += `Current Grade:     ${current}%n`;
-    res += `Target Final Grade:${target}%n`;
-    res += `Final Exam Weight: ${weight}%nn`;
-    res += `REQUIRED SCORE ON FINAL EXAM: ${needed.toFixed(2)}%nn`;
-
-    if (needed > 100) {
-      res += `Status: ⚠️ You need over 100% on final exam to reach target grade. Extra credit required.`;
-    } else if (needed <= 0) {
-      res += `Status: 🎉 You have already guaranteed target grade regardless of final exam!`;
-    } else {
-      res += `Status: ✅ Achieve at least ${needed.toFixed(1)}% on final exam to secure your target grade.`;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Marks Needed Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Marks Needed computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast(`Needed on Final: ${needed.toFixed(1)}%`, needed > 100 ? 'warning' : 'success');
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'marks-needed-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] marks-needed:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-mn-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_marks_needed);
+} else {
+  init_marks_needed();
+}

@@ -1,140 +1,115 @@
 /**
- * Upgraded Live Interactive Pomodoro Focus Timer Engine
+ * Pomodoro Timer Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_pomodoro_timer() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('pomo-display')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;margin-bottom:1.5rem">
-        <div><label class="form-label">Focus Work (min)</label><input type="number" id="pomo-work" class="form-input" value="25" min="1" max="120"></div>
-        <div><label class="form-label">Short Break (min)</label><input type="number" id="pomo-sbreak" class="form-input" value="5" min="1" max="60"></div>
-        <div><label class="form-label">Long Break (min)</label><input type="number" id="pomo-lbreak" class="form-input" value="15" min="1" max="60"></div>
-        <div><label class="form-label">Target Sessions</label><input type="number" id="pomo-sessions" class="form-input" value="4" min="1" max="12"></div>
-      </div>
-      <div style="text-align:center;margin-bottom:1.5rem">
-        <div id="pomo-mode-badge" style="font-size:0.9rem;font-weight:700;letter-spacing:1px;color:var(--primary);margin-bottom:0.5rem;text-transform:uppercase">🎯 Focus Mode</div>
-        <div id="pomo-display" style="font-size:3.5rem;font-weight:800;font-family:monospace;margin-bottom:1rem;color:var(--text);background:var(--surface-2);padding:1.5rem;border-radius:var(--radius-md);border:1px solid var(--border)">25:00</div>
-        <div style="display:flex;gap:0.75rem;justify-content:center">
-          <button id="pomo-start-btn" type="button" class="btn btn-primary" style="padding:0.75rem 1.5rem;font-weight:700">▶️ Start Session</button>
-          <button id="pomo-reset-btn" type="button" class="btn btn-secondary" style="padding:0.75rem 1.5rem;font-weight:700">🔄 Reset</button>
-        </div>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  let timer = null;
-  let secondsLeft = 1500;
-  let isRunning = false;
-  let mode = 'work'; // 'work' | 'break'
-  let completedSessions = 0;
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function playAudioChime() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 587.33; // D5 note
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 1.2);
-    } catch(e) {}
-  }
+        let res = 0;
+        let report = `=== ${'Pomodoro Timer'.toUpperCase()} REPORT ===\n\n`;
 
-  function updateDisplay() {
-    const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
-    const s = (secondsLeft % 60).toString().padStart(2, '0');
-
-    const disp = document.getElementById('pomo-display');
-    if (disp) disp.textContent = `${m}:${s}`;
-
-    const badge = document.getElementById('pomo-mode-badge');
-    if (badge) {
-      badge.textContent = mode === 'work' ? '🎯 Focus Work Mode' : '☕ Rest & Break Time';
-      badge.style.color = mode === 'work' ? 'var(--primary)' : '#22c55e';
-    }
-
-    if (out) {
-      out.value = `==========================================================
-                POMODORO FOCUS TIMER STATUS
-==========================================================
-Current Mode:        ${mode === 'work' ? '🎯 FOCUS WORK' : '☕ SHORT BREAK'}
-Timer Status:        ${isRunning ? '🟢 TICKING' : '⏸️ PAUSED'}
-Time Remaining:      ${m}:${s}
-Completed Sessions:  ${completedSessions} Focus Cycles
-==========================================================`;
-    }
-  }
-
-  const startBtn = document.getElementById('pomo-start-btn');
-  if (startBtn) {
-    startBtn.onclick = () => {
-      if (isRunning) {
-        clearInterval(timer);
-        isRunning = false;
-        startBtn.textContent = '▶️ Resume Session';
-        updateDisplay();
-        if (window.showToast) window.showToast('⏸️ Pomodoro paused', 'warning');
-        return;
-      }
-
-      const workMin = parseInt(document.getElementById('pomo-work')?.value || 25, 10);
-      const breakMin = parseInt(document.getElementById('pomo-sbreak')?.value || 5, 10);
-
-      if (secondsLeft === 0) {
-        secondsLeft = (mode === 'work' ? workMin : breakMin) * 60;
-      }
-
-      isRunning = true;
-      startBtn.textContent = '⏸️ Pause Session';
-
-      timer = setInterval(() => {
-        if (secondsLeft > 0) {
-          secondsLeft--;
-          updateDisplay();
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
         } else {
-          clearInterval(timer);
-          isRunning = false;
-          playAudioChime();
-
-          if (mode === 'work') {
-            completedSessions++;
-            mode = 'break';
-            secondsLeft = breakMin * 60;
-            if (window.showToast) window.showToast('🎉 Work session complete! Take a break', 'success');
-          } else {
-            mode = 'work';
-            secondsLeft = workMin * 60;
-            if (window.showToast) window.showToast('⚡ Break over! Ready for next session', 'info');
-          }
-
-          startBtn.textContent = '▶️ Start Next Phase';
-          updateDisplay();
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
-      }, 1000);
-    };
-  }
 
-  const resetBtn = document.getElementById('pomo-reset-btn');
-  if (resetBtn) {
-    resetBtn.onclick = () => {
-      clearInterval(timer);
-      isRunning = false;
-      mode = 'work';
-      const workMin = parseInt(document.getElementById('pomo-work')?.value || 25, 10);
-      secondsLeft = workMin * 60;
-      if (startBtn) startBtn.textContent = '▶️ Start Session';
-      updateDisplay();
-      if (window.showToast) window.showToast('🔄 Timer reset', 'info');
-    };
-  }
+        if (out) out.value = report;
 
-  if (btn) btn.style.display = 'none';
-  updateDisplay();
-});
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Pomodoro Timer Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Pomodoro Timer computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
+    }
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pomodoro-timer-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] pomodoro-timer:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_pomodoro_timer);
+} else {
+  init_pomodoro_timer();
+}

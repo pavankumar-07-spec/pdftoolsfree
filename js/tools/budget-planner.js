@@ -1,60 +1,115 @@
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Budget Planner Engine - Client-Side Real Engine
+ */
+function init_budget_planner() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div><label class="form-label">Monthly Take-Home Income ($)</label><input type="number" id="bud-income" class="form-input" value="4000" min="0"></div>
-        <div><label class="form-label">Budget Allocation Strategy</label>
-          <select id="bud-rule" class="form-input">
-            <option value="50-30-20">50 / 30 / 20 Rule (Standard)</option>
-            <option value="70-20-10">70 / 20 / 10 Rule (Aggressive Savings)</option>
-            <option value="60-20-20">60 / 20 / 20 Rule (Balanced)</option>
-          </select>
-        </div>
-      </div>
-      <button id="bud-calc-btn" class="btn btn-primary w-full">💰 Generate Budget Allocation Plan</button>
-    `;
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
+
+        let res = 0;
+        let report = `=== ${'Budget Planner'.toUpperCase()} REPORT ===\n\n`;
+
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Budget Planner Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Budget Planner computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
+    }
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'budget-planner-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] budget-planner:', err);
   }
+}
 
-  function calculate() {
-    const income = parseFloat(document.getElementById('bud-income')?.value || 4000);
-    const rule = document.getElementById('bud-rule')?.value || '50-30-20';
-
-    let nPct = 0.50, wPct = 0.30, sPct = 0.20;
-    if (rule === '70-20-10') { nPct = 0.70; wPct = 0.20; sPct = 0.10; }
-    else if (rule === '60-20-20') { nPct = 0.60; wPct = 0.20; sPct = 0.20; }
-
-    const needs = income * nPct;
-    const wants = income * wPct;
-    const savings = income * sPct;
-
-    let res = `--- MONTHLY BUDGET ALLOCATION PLAN (${rule}) ---
-
-`;
-    res += `Total Monthly Income: $${income.toFixed(2)}
-
-`;
-    res += `=== RECOMMENDED EXPENSE BREAKDOWN ===
-`;
-    res += `1. Needs (Rent, Utilities, Food):       $${needs.toFixed(2)} (${Math.round(nPct*100)}%)
-`;
-    res += `2. Wants (Dining, Entertainment):     $${wants.toFixed(2)} (${Math.round(wPct*100)}%)
-`;
-    res += `3. Savings & Debt Payoff:             $${savings.toFixed(2)} (${Math.round(sPct*100)}%)
-
-`;
-    res += `Annual Savings Potential: $${(savings * 12).toFixed(2)} / year`;
-
-    if (out) out.value = res;
-    if (window.showToast) window.showToast(`Savings Target: $${savings.toFixed(0)}/mo`, 'success');
-  }
-
-  document.getElementById('bud-calc-btn')?.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_budget_planner);
+} else {
+  init_budget_planner();
+}

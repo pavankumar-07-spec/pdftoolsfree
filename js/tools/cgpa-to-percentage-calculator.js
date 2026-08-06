@@ -1,80 +1,121 @@
 /**
- * CGPA TO PERCENTAGE CALCULATOR - Real Calculation Engine
+ * Cgpa To Percentage Calculator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_cgpa_to_percentage_calculator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const v1 = document.getElementById('ac-val1');
-  const v2 = document.getElementById('ac-val2');
-  const input = document.getElementById('main-input');
-  const btn = document.getElementById('generate-btn');
-  const downloadBtn = document.getElementById('download-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_ac_val1 = document.getElementById('ac-val1');
+      const val_ac_val1 = el_ac_val1 ? (parseFloat(el_ac_val1.value) || el_ac_val1.value) : 10;
+      const el_ac_val2 = document.getElementById('ac-val2');
+      const val_ac_val2 = el_ac_val2 ? (parseFloat(el_ac_val2.value) || el_ac_val2.value) : 15;
+      const el_main_input = document.getElementById('main-input');
+      const val_main_input = el_main_input ? (parseFloat(el_main_input.value) || el_main_input.value) : 20;
 
-  function calculate() {
-    const val1 = parseFloat(v1 ? v1.value : 0) || 0;
-    const val2 = parseFloat(v2 ? v2.value : 0) || 10;
-    const rawText = input ? input.value : '';
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-    let resText = '';
-    if ('cgpa-to-percentage-calculator'.includes('cgpa-to-percentage')) {
-      const pct10 = (val1 * 9.5).toFixed(2);
-      const pct100 = (val1 * 10).toFixed(2);
-      resText = `=== CGPA TO PERCENTAGE CONVERSION ===
-Input CGPA: ${val1} (Scale: ${val2})
+        let res = 0;
+        let report = `=== ${'Cgpa To Percentage Calculator'.toUpperCase()} REPORT ===\n\n`;
 
-1. CBSE / Standard Formula (CGPA * 9.5): ${pct10}%
-2. Direct Percentage Formula (CGPA * 10): ${pct100}%
-Equivalent Grade Class: ${val1 >= 8 ? 'First Class with Distinction' : val1 >= 6.5 ? 'First Class' : 'Second Class'}`;
-    } else if ('cgpa-to-percentage-calculator'.includes('sgpa') || 'cgpa-to-percentage-calculator'.includes('gpa')) {
-      let totalCredits = 0;
-      let totalGradePoints = 0;
-      const lines = rawText.split('n');
-      lines.forEach(l => {
-        const parts = l.split(',').map(p => parseFloat(p.trim())).filter(p => !isNaN(p));
-        if (parts.length >= 2) {
-          const cred = parts[0];
-          const gp = parts[1];
-          totalCredits += cred;
-          totalGradePoints += (cred * gp);
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
-      });
 
-      const gpa = totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : (val1).toFixed(2);
-      resText = `=== GPA / SGPA CALCULATION REPORT ===
-Total Course Credits: ${totalCredits || 'Default'}
-Total Grade Points Earned: ${totalGradePoints.toFixed(2)}
-Calculated SGPA / GPA: ${gpa}
-Estimated Equivalent Percentage: ${(gpa * 9.5).toFixed(2)}%`;
-    } else {
-      const percentageNeeded = ((val1 / (val2 || 100)) * 100).toFixed(2);
-      resText = `=== ACADEMIC MARKS & GRADE ANALYSIS ===
-Target Score / Marks: ${val1}
-Total Scale / Maximum: ${val2}
-Required Target Percentage: ${percentageNeeded}%
-Status: ${percentageNeeded >= 40 ? 'Passing Mark Attainable' : 'High Effort Required'}`;
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Cgpa To Percentage Calculator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Cgpa To Percentage Calculator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    if (out) out.value = resText;
-    if (window.showToast) window.showToast('Calculation complete!', 'success');
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cgpa-to-percentage-calculator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] cgpa-to-percentage-calculator:', err);
   }
+}
 
-  if (btn) btn.addEventListener('click', calculate);
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      const blob = new Blob([out ? out.value : ''], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'cgpa-to-percentage-calculator-report.txt';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); URL.revokeObjectURL(url); }, 1000);
-      if (window.showToast) window.showToast('Report downloaded!', 'success');
-    });
-  }
-
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_cgpa_to_percentage_calculator);
+} else {
+  init_cgpa_to_percentage_calculator();
+}

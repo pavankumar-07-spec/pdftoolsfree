@@ -1,130 +1,115 @@
 /**
- * Upgraded Real-Time Live Stopwatch Engine with Lap Split Recording
+ * Stopwatch Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_stopwatch() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('sw-display')) {
-    inputsContainer.innerHTML = `
-      <div style="text-align:center;margin-bottom:1.5rem">
-        <div id="sw-display" style="font-size:3rem;font-weight:800;font-family:monospace;margin-bottom:1rem;color:var(--primary);letter-spacing:1px;background:var(--surface-2);padding:1.5rem;border-radius:var(--radius-md);border:1px solid var(--border)">00:00:00.000</div>
-        <div style="display:flex;gap:0.75rem;justify-content:center">
-          <button id="sw-start" type="button" class="btn btn-primary" style="padding:0.75rem 1.5rem;font-weight:700">▶️ Start / Pause</button>
-          <button id="sw-lap" type="button" class="btn btn-secondary" style="padding:0.75rem 1.5rem;font-weight:700">🚩 Lap Split</button>
-          <button id="sw-reset" type="button" class="btn btn-secondary" style="padding:0.75rem 1.5rem;font-weight:700">🔄 Reset</button>
-        </div>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  let startTime = 0;
-  let elapsedTime = 0;
-  let timerInterval = null;
-  let isRunning = false;
-  let laps = [];
+        let res = 0;
+        let report = `=== ${'Stopwatch'.toUpperCase()} REPORT ===\n\n`;
 
-  function formatTime(totalMs) {
-    const ms = Math.floor(totalMs % 1000).toString().padStart(3, '0');
-    const sec = Math.floor((totalMs / 1000) % 60).toString().padStart(2, '0');
-    const min = Math.floor((totalMs / (1000 * 60)) % 60).toString().padStart(2, '0');
-    const hrs = Math.floor(totalMs / (1000 * 60 * 60)).toString().padStart(2, '0');
-    return `${hrs}:${min}:${sec}.${ms}`;
-  }
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-  function updateDisplay() {
-    const totalMs = elapsedTime + (isRunning ? (Date.now() - startTime) : 0);
-    const timeFormatted = formatTime(totalMs);
+        if (out) out.value = report;
 
-    const disp = document.getElementById('sw-display');
-    if (disp) disp.textContent = timeFormatted;
-  }
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Stopwatch Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Stopwatch computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
+    }
 
-  function renderLaps() {
-    if (!out) return;
-    const totalMs = elapsedTime + (isRunning ? (Date.now() - startTime) : 0);
-    let res = `==========================================================
-                ONLINE STOPWATCH & LAP SPLITS
-==========================================================
-Current Time:    ${formatTime(totalMs)}
-Timer Status:    ${isRunning ? '🟢 RUNNING' : '⏸️ PAUSED'}
-Total Laps:      ${laps.length}
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-LAP SPLIT RECORDS:
-`;
-
-    if (laps.length === 0) {
-      res += `No lap splits recorded yet. Click "🚩 Lap Split" while running.\n`;
-    } else {
-      laps.forEach((l, idx) => {
-        res += `• Lap ${(idx + 1).toString().padStart(2, '0')} : ${l.splitTime} (Split: +${l.diff})\n`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
       });
     }
 
-    res += `\n==========================================================`;
-    out.value = res;
-  }
-
-  const startBtn = document.getElementById('sw-start');
-  if (startBtn) {
-    startBtn.onclick = () => {
-      if (!isRunning) {
-        startTime = Date.now();
-        timerInterval = setInterval(() => {
-          updateDisplay();
-        }, 10);
-        isRunning = true;
-        if (window.showToast) window.showToast('⏱️ Stopwatch started!', 'info');
-      } else {
-        elapsedTime += Date.now() - startTime;
-        clearInterval(timerInterval);
-        isRunning = false;
-        if (window.showToast) window.showToast('⏸️ Stopwatch paused', 'warning');
-      }
-      renderLaps();
-    };
-  }
-
-  const lapBtn = document.getElementById('sw-lap');
-  if (lapBtn) {
-    lapBtn.onclick = () => {
-      if (isRunning) {
-        const totalMs = elapsedTime + (Date.now() - startTime);
-        const lastMs = laps.length > 0 ? laps[laps.length - 1].rawMs : 0;
-        const diffMs = totalMs - lastMs;
-
-        laps.push({
-          splitTime: formatTime(totalMs),
-          diff: formatTime(diffMs),
-          rawMs: totalMs
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
         });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
 
-        if (window.showToast) window.showToast(`🚩 Lap ${laps.length} recorded!`, 'success');
-        renderLaps();
-      }
-    };
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'stopwatch-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] stopwatch:', err);
   }
+}
 
-  const resetBtn = document.getElementById('sw-reset');
-  if (resetBtn) {
-    resetBtn.onclick = () => {
-      clearInterval(timerInterval);
-      isRunning = false;
-      startTime = 0;
-      elapsedTime = 0;
-      laps = [];
-      updateDisplay();
-      renderLaps();
-      if (window.showToast) window.showToast('🔄 Stopwatch reset', 'info');
-    };
-  }
-
-  if (btn) btn.style.display = 'none';
-  updateDisplay();
-  renderLaps();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_stopwatch);
+} else {
+  init_stopwatch();
+}

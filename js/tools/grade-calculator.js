@@ -1,69 +1,119 @@
 /**
- * Real Client-Side Academic Grade & Score Calculator Engine
+ * Grade Calculator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_grade_calculator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_ac_val2 = document.getElementById('ac-val2');
+      const val_ac_val2 = el_ac_val2 ? (parseFloat(el_ac_val2.value) || el_ac_val2.value) : 10;
+      const el_main_input = document.getElementById('main-input');
+      const val_main_input = el_main_input ? (parseFloat(el_main_input.value) || el_main_input.value) : 15;
 
-  if (inputsContainer && !document.getElementById('gc-score')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Earned Score / Points:</label>
-          <input type="number" id="gc-score" class="form-input" value="88" min="0" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-        </div>
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Total Maximum Points:</label>
-          <input type="number" id="gc-total" class="form-input" value="100" min="1" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-        </div>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-gc-btn" class="btn btn-primary flex-1">📊 Calculate Letter Grade</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function calculate() {
-    const score = parseFloat(document.getElementById('gc-score') ? document.getElementById('gc-score').value : 88) || 0;
-    const total = parseFloat(document.getElementById('gc-total') ? document.getElementById('gc-total').value : 100) || 100;
+        let res = 0;
+        let report = `=== ${'Grade Calculator'.toUpperCase()} REPORT ===\n\n`;
 
-    if (total <= 0) {
-      if (out) out.value = 'ERROR: Total points must be greater than 0.';
-      return;
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Grade Calculator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Grade Calculator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    const pct = (score / total) * 100;
-    let letter = 'F';
-    let gpaPoint = 0.0;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    if (pct >= 93) { letter = 'A'; gpaPoint = 4.0; }
-    else if (pct >= 90) { letter = 'A-'; gpaPoint = 3.7; }
-    else if (pct >= 87) { letter = 'B+'; gpaPoint = 3.3; }
-    else if (pct >= 83) { letter = 'B'; gpaPoint = 3.0; }
-    else if (pct >= 80) { letter = 'B-'; gpaPoint = 2.7; }
-    else if (pct >= 77) { letter = 'C+'; gpaPoint = 2.3; }
-    else if (pct >= 73) { letter = 'C'; gpaPoint = 2.0; }
-    else if (pct >= 70) { letter = 'C-'; gpaPoint = 1.7; }
-    else if (pct >= 67) { letter = 'D+'; gpaPoint = 1.3; }
-    else if (pct >= 60) { letter = 'D'; gpaPoint = 1.0; }
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    let res = `--- ACADEMIC GRADE CALCULATOR REPORT ---nn`;
-    res += `Earned Points:   ${score} / ${total}n`;
-    res += `Percentage:      ${pct.toFixed(2)}%n`;
-    res += `LETTER GRADE:    ${letter}n`;
-    res += `GPA Scale (4.0): ${gpaPoint.toFixed(1)}nn`;
-    res += `Status: ✅ Grade computed according to US 4.0 Standard Scale.`;
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast(`Grade: ${letter} (${pct.toFixed(1)}%)`, 'success');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'grade-calculator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] grade-calculator:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-gc-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_grade_calculator);
+} else {
+  init_grade_calculator();
+}

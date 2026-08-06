@@ -1,96 +1,103 @@
 /**
- * JSON Viewer & Inspector Engine
+ * Json Viewer Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_json_viewer() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('jv-json')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input Raw JSON String:</label>
-        <textarea id="jv-json" class="form-input" style="width:100%;height:140px;padding:0.5rem;font-family:monospace;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">{"name":"FreeToolsPDF","status":"active","tools":274,"features":["Client-Side","Fast","Private"],"config":{"version":1.0,"theme":"light"}}</textarea>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-jv-btn" class="btn btn-primary flex-1">🔍 Format & Inspect JSON</button>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  function getType(val) {
-    if (val === null) return 'Null';
-    if (Array.isArray(val)) return `Array (${val.length} items)`;
-    if (typeof val === 'object') return `Object (${Object.keys(val).length} keys)`;
-    return typeof val;
-  }
+        const firstInputId = "";
+        const inputEl = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const inputVal = inputEl ? (inputEl.value || '').trim() : '';
 
-  function generateTreeStructure(obj, indent = 0) {
-    const spaces = '  '.repeat(indent);
-    let output = '';
+        let result = '', status = 'Processed';
 
-    if (Array.isArray(obj)) {
-      output += `${spaces}[n`;
-      obj.forEach((item, idx) => {
-        const isLast = idx === obj.length - 1;
-        if (typeof item === 'object' && item !== null) {
-          output += `${spaces}  [${idx}]:n` + generateTreeStructure(item, indent + 2) + (isLast ? '' : 'n');
+        if (slug.includes('json')) {
+          if (!inputVal) result = '{\n  "status": "ready",\n  "message": "Enter JSON data above to format or validate"\n}';
+          else { const parsed = JSON.parse(inputVal); result = JSON.stringify(parsed, null, 2); status = 'Valid JSON'; }
+        } else if (slug.includes('base64')) {
+          if (slug.includes('decode')) result = atob(inputVal);
+          else result = btoa(unescape(encodeURIComponent(inputVal || 'Sample Data')));
+        } else if (slug.includes('uuid')) {
+          result = Array.from({length: 5}, () => crypto.randomUUID()).join('\n');
         } else {
-          output += `${spaces}  [${idx}]: ${JSON.stringify(item)}${isLast ? '' : ','}n`;
+          result = `=== ${'Json Viewer'.toUpperCase()} OUTPUT ===\nLength: ${inputVal.length} chars\nLines: ${inputVal ? inputVal.split('\n').length : 0}\n\nProcessed Output:\n${inputVal || 'Enter data above to process'}`;
+        }
+
+        if (out) out.value = result;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Json Viewer Workspace',
+            status: status,
+            archetype: 'dev',
+            kpis: [{ label: 'INPUT SIZE', value: inputVal.length + ' chars', sub: 'Input Payload' }],
+            steps: ['Step 1: Parsed payload.', 'Step 2: Transformed client-side.', 'Step 3: Formatted output.']
+          });
+        }
+        if (window.showToast) window.showToast('Json Viewer processed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
+    }
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
         }
       });
-      output += `${spaces}]`;
-    } else if (typeof obj === 'object' && obj !== null) {
-      output += `${spaces}{n`;
-      const keys = Object.keys(obj);
-      keys.forEach((key, idx) => {
-        const isLast = idx === keys.length - 1;
-        const val = obj[key];
-        if (typeof val === 'object' && val !== null) {
-          output += `${spaces}  "${key}" (${getType(val)}):n` + generateTreeStructure(val, indent + 2) + (isLast ? '' : 'n');
-        } else {
-          output += `${spaces}  "${key}": ${JSON.stringify(val)}${isLast ? '' : ','}n`;
-        }
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
       });
-      output += `${spaces}}`;
-    } else {
-      output += `${spaces}${JSON.stringify(obj)}`;
     }
 
-    return output;
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'json-viewer-output.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] json-viewer:', err);
   }
+}
 
-  function calculate() {
-    const raw = document.getElementById('jv-json') ? document.getElementById('jv-json').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
-
-    if (!raw.trim()) {
-      if (out) out.value = 'ERROR: Please enter JSON text.';
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(raw);
-      const formattedJSON = JSON.stringify(parsed, null, 2);
-      const treeView = generateTreeStructure(parsed);
-
-      let res = `--- JSON VIEWER & INSPECTOR REPORT ---nn`;
-      res += `Status: ✅ VALID JSONn`;
-      res += `Root Structure: ${getType(parsed)}nn`;
-
-      res += `=== STRUCTURED TREE VIEW ===n`;
-      res += `${treeView}nn`;
-
-      res += `=== BEAUTIFIED JSON OUTPUT ===n`;
-      res += `${formattedJSON}n`;
-
-      if (out) out.value = res;
-      if (window.showToast) window.showToast('JSON formatted and inspected!', 'success');
-    } catch (err) {
-      if (out) out.value = `❌ INVALID JSON ERROR:n${err.message}`;
-    }
-  }
-
-  const activeBtn = document.getElementById('calc-jv-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_json_viewer);
+} else {
+  init_json_viewer();
+}

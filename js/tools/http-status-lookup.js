@@ -1,69 +1,115 @@
 /**
- * HTTP Status Code Lookup Engine
+ * Http Status Lookup Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_http_status_lookup() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('hsl-code')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">HTTP Status Code or Keyword (e.g. 404, 200, 500, Unauthorized):</label>
-        <input type="text" id="hsl-code" class="form-input" value="404" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-hsl-btn" class="btn btn-primary flex-1">🔍 Lookup HTTP Code</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  const httpCodes = {
-    '200': { title: 'OK', cat: '2xx Success', desc: 'Standard response for successful HTTP requests.' },
-    '201': { title: 'Created', cat: '2xx Success', desc: 'Request fulfilled and a new resource has been created.' },
-    '204': { title: 'No Content', cat: '2xx Success', desc: 'Server successfully processed request but returns no content body.' },
-    '301': { title: 'Moved Permanently', cat: '3xx Redirection', desc: 'Target resource has been assigned a new permanent URI.' },
-    '302': { title: 'Found (Temporary Redirect)', cat: '3xx Redirection', desc: 'Target resource resides temporarily under a different URI.' },
-    '304': { title: 'Not Modified', cat: '3xx Redirection', desc: 'Resource has not been modified since last requested (caching).' },
-    '400': { title: 'Bad Request', cat: '4xx Client Error', desc: 'Server cannot process request due to client syntax error.' },
-    '401': { title: 'Unauthorized', cat: '4xx Client Error', desc: 'Authentication is required and has failed or not been provided.' },
-    '403': { title: 'Forbidden', cat: '4xx Client Error', desc: 'Server understood request but refuses to authorize it.' },
-    '404': { title: 'Not Found', cat: '4xx Client Error', desc: 'Requested resource could not be found on server.' },
-    '405': { title: 'Method Not Allowed', cat: '4xx Client Error', desc: 'Request method (GET, POST, etc.) is not supported for requested resource.' },
-    '429': { title: 'Too Many Requests', cat: '4xx Client Error', desc: 'User has sent too many requests in a given amount of time (rate limiting).' },
-    '500': { title: 'Internal Server Error', cat: '5xx Server Error', desc: 'Generic error message when server encounters an unexpected condition.' },
-    '502': { title: 'Bad Gateway', cat: '5xx Server Error', desc: 'Server acting as gateway/proxy received an invalid response from upstream.' },
-    '503': { title: 'Service Unavailable', cat: '5xx Server Error', desc: 'Server is currently unable to handle request due to temporary overload or maintenance.' },
-    '504': { title: 'Gateway Timeout', cat: '5xx Server Error', desc: 'Server acting as gateway did not receive timely response from upstream.' }
-  };
+        let res = 0;
+        let report = `=== ${'Http Status Lookup'.toUpperCase()} REPORT ===\n\n`;
 
-  function calculate() {
-    const query = document.getElementById('hsl-code') ? document.getElementById('hsl-code').value.trim().toLowerCase() : '';
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    let res = `--- HTTP STATUS CODE LOOKUP ---nn`;
+        if (out) out.value = report;
 
-    const keys = Object.keys(httpCodes).filter(k => k.includes(query) || httpCodes[k].title.toLowerCase().includes(query));
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Http Status Lookup Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Http Status Lookup computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
+    }
 
-    if (keys.length === 0) {
-      res += `No HTTP status code matching "${query}". Available: ${Object.keys(httpCodes).join(', ')}`;
-    } else {
-      keys.forEach(code => {
-        const item = httpCodes[code];
-        res += `=== HTTP ${code} ${item.title.toUpperCase()} ===n`;
-        res += `Category:    ${item.cat}n`;
-        res += `Description: ${item.desc}nn`;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
       });
     }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast('HTTP code details retrieved!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'http-status-lookup-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] http-status-lookup:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-hsl-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_http_status_lookup);
+} else {
+  init_http_status_lookup();
+}

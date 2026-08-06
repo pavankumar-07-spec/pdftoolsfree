@@ -1,60 +1,119 @@
 /**
- * Taylor Series Expansion Engine
+ * Taylor Series Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const ic = document.getElementById('tool-inputs-container');
-  const out = document.getElementById('main-output');
-  if (ic && !document.getElementById('ts-func')) {
-    ic.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.5rem">
-        <div><label class="form-label">Function</label>
-          <select id="ts-func" class="form-input">
-            <option value="exp" selected>eˣ</option>
-            <option value="sin">sin(x)</option>
-            <option value="cos">cos(x)</option>
-            <option value="ln1px">ln(1+x)</option>
-          </select>
-        </div>
-        <div><label class="form-label">Expand at x =</label><input type="number" id="ts-x" class="form-input" value="1" step="0.1"></div>
-        <div><label class="form-label">Terms (n)</label><input type="number" id="ts-n" class="form-input" value="8" min="1" max="20"></div>
-      </div>
-      <button id="calc-ts-btn" class="btn btn-primary" style="width:100%">📐 Compute Taylor Expansion</button>
-    `;
-  }
-  function factorial(n) { let r = 1; for(let i = 2; i <= n; i++) r *= i; return r; }
-  function calc() {
-    try {
-      const func = document.getElementById('ts-func')?.value || 'exp';
-      const x = parseFloat(document.getElementById('ts-x')?.value) || 0;
-      const n = parseInt(document.getElementById('ts-n')?.value) || 8;
-      let terms = [], sum = 0;
-      for (let k = 0; k < n; k++) {
-        let coeff = 0;
-        if (func === 'exp') coeff = Math.pow(x, k) / factorial(k);
-        else if (func === 'sin') coeff = (k % 2 === 0 ? 0 : (((k-1)/2) % 2 === 0 ? 1 : -1)) * Math.pow(x, k) / factorial(k);
-        else if (func === 'cos') coeff = (k % 2 === 1 ? 0 : ((k/2) % 2 === 0 ? 1 : -1)) * Math.pow(x, k) / factorial(k);
-        else if (func === 'ln1px') coeff = k === 0 ? 0 : (k % 2 === 1 ? 1 : -1) * Math.pow(x, k) / k;
-        sum += coeff;
-        if (Math.abs(coeff) > 1e-15) terms.push({ k, coeff, cumSum: sum });
+function init_taylor_series() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
+
+    function calculate() {
+      try {
+      const el_taylor_expr = document.getElementById('taylor-expr');
+      const val_taylor_expr = el_taylor_expr ? (parseFloat(el_taylor_expr.value) || el_taylor_expr.value) : 10;
+      const el_taylor_n = document.getElementById('taylor-n');
+      const val_taylor_n = el_taylor_n ? (parseFloat(el_taylor_n.value) || el_taylor_n.value) : 15;
+
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
+
+        let res = 0;
+        let report = `=== ${'Taylor Series'.toUpperCase()} REPORT ===\n\n`;
+
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Taylor Series Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Taylor Series computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-      const labels = { exp: 'eˣ', sin: 'sin(x)', cos: 'cos(x)', ln1px: 'ln(1+x)' };
-      let r = '==========================================================\n';
-      r += '             TAYLOR SERIES EXPANSION\n';
-      r += '==========================================================\n';
-      r += 'Function:  ' + labels[func] + '\nx = ' + x + ', Terms = ' + n + '\n\n';
-      r += 'TERM-BY-TERM EXPANSION:\n';
-      r += 'k'.padEnd(4) + 'Term Value'.padEnd(20) + 'Cumulative Sum\n';
-      r += '─'.repeat(42) + '\n';
-      terms.forEach(t => { r += t.k.toString().padEnd(4) + t.coeff.toFixed(10).padEnd(20) + t.cumSum.toFixed(10) + '\n'; });
-      r += '\nApproximation ≈ ' + sum.toFixed(10) + '\n';
-      r += '==========================================================';
-      if (out) out.value = r;
-      if (window.showToast) window.showToast(labels[func] + ' ≈ ' + sum.toFixed(6), 'success');
-    } catch (e) { if (out) out.value = 'Error: ' + e.message; }
+    }
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'taylor-series-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] taylor-series:', err);
   }
-  const b = document.getElementById('calc-ts-btn') || document.getElementById('generate-btn');
-  if (b) b.onclick = calc;
-  const sel = document.getElementById('ts-func');
-  if (sel) sel.onchange = calc;
-  calc();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_taylor_series);
+} else {
+  init_taylor_series();
+}

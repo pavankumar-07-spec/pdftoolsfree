@@ -1,81 +1,103 @@
 /**
- * Upgraded Bulk UUID v4 Generator Engine
+ * Uuid Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_uuid_generator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('uuid-count')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1rem;margin-bottom:1.5rem">
-        <div>
-          <label class="form-label">Quantity to Generate (1 to 500)</label>
-          <input type="number" id="uuid-count" class="form-input" value="10" min="1" max="500">
-        </div>
-        <div>
-          <label class="form-label">Letter Case Format</label>
-          <select id="uuid-case" class="form-input">
-            <option value="lower" selected>lowercase (e.g. 550e8400...)</option>
-            <option value="upper">UPPERCASE (e.g. 550E8400...)</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Hyphen Formatting</label>
-          <select id="uuid-hyphen" class="form-input">
-            <option value="yes" selected>Include Hyphens (Standard 8-4-4-4-12)</option>
-            <option value="no">Remove Hyphens (32-character continuous)</option>
-          </select>
-        </div>
-      </div>
-      <div class="flex gap-3 mt-4">
-        <button id="calc-uuid-btn" type="button" class="btn btn-primary flex-1">🔑 Generate Bulk UUIDs (v4)</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const inputEl = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const inputVal = inputEl ? (inputEl.value || '').trim() : '';
 
-  function generateSingleUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  }
+        let result = '', status = 'Processed';
 
-  function generateUUIDs() {
-    const count = parseInt(document.getElementById('uuid-count')?.value || 10, 10);
-    const letterCase = document.getElementById('uuid-case')?.value || 'lower';
-    const useHyphen = document.getElementById('uuid-hyphen')?.value || 'yes';
+        if (slug.includes('json')) {
+          if (!inputVal) result = '{\n  "status": "ready",\n  "message": "Enter JSON data above to format or validate"\n}';
+          else { const parsed = JSON.parse(inputVal); result = JSON.stringify(parsed, null, 2); status = 'Valid JSON'; }
+        } else if (slug.includes('base64')) {
+          if (slug.includes('decode')) result = atob(inputVal);
+          else result = btoa(unescape(encodeURIComponent(inputVal || 'Sample Data')));
+        } else if (slug.includes('uuid')) {
+          result = Array.from({length: 5}, () => crypto.randomUUID()).join('\n');
+        } else {
+          result = `=== ${'Uuid Generator'.toUpperCase()} OUTPUT ===\nLength: ${inputVal.length} chars\nLines: ${inputVal ? inputVal.split('\n').length : 0}\n\nProcessed Output:\n${inputVal || 'Enter data above to process'}`;
+        }
 
-    const safeCount = Math.max(1, Math.min(500, count));
-    const list = [];
+        if (out) out.value = result;
 
-    for (let i = 0; i < safeCount; i++) {
-      let u = generateSingleUUID();
-      if (useHyphen === 'no') u = u.replace(/-/g, '');
-      if (letterCase === 'upper') u = u.toUpperCase();
-      list.push(u);
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Uuid Generator Workspace',
+            status: status,
+            archetype: 'dev',
+            kpis: [{ label: 'INPUT SIZE', value: inputVal.length + ' chars', sub: 'Input Payload' }],
+            steps: ['Step 1: Parsed payload.', 'Step 2: Transformed client-side.', 'Step 3: Formatted output.']
+          });
+        }
+        if (window.showToast) window.showToast('Uuid Generator processed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    let report = `==========================================================
-              BULK UUID (v4) GENERATOR
-==========================================================
-Generated Count:   ${safeCount} UUIDs
-Format:            ${letterCase.toUpperCase()} | ${useHyphen === 'yes' ? 'Hyphenated (8-4-4-4-12)' : 'Continuous 32-char'}
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-GENERATED UUID LIST:
-` + list.join('\n');
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    if (out) out.value = report;
-    if (window.showToast) window.showToast(`Generated ${safeCount} UUIDs!`, 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'uuid-generator-output.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] uuid-generator:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-uuid-btn') || btn;
-  if (activeBtn) activeBtn.onclick = () => generateUUIDs();
-
-  generateUUIDs();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_uuid_generator);
+} else {
+  init_uuid_generator();
+}

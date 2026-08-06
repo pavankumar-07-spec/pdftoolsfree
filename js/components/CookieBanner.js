@@ -13,6 +13,7 @@ class CookieBanner {
     if (consentState === 'accepted') {
       this.updateConsentState('granted');
       this.loadAdSense();
+      this.loadClarity();
       return;
     } else if (consentState === 'declined') {
       this.updateConsentState('denied');
@@ -33,8 +34,8 @@ class CookieBanner {
         'analytics_storage': status
       });
     }
-    if (status === 'granted' && typeof window.clarity === 'function') {
-      window.clarity('consent');
+    if (status === 'granted') {
+      this.loadClarity();
     }
   }
 
@@ -45,6 +46,16 @@ class CookieBanner {
     script.async = true;
     script.crossOrigin = "anonymous";
     document.head.appendChild(script);
+  }
+
+  loadClarity() {
+    if (window.clarityLoaded) return;
+    window.clarityLoaded = true;
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x8xlyl54pl");
   }
 
   render() {
@@ -136,6 +147,7 @@ class CookieBanner {
     localStorage.setItem(this.storageKey, 'accepted');
     this.updateConsentState('granted');
     this.loadAdSense();
+    this.loadClarity();
     banner.style.transform = 'translateY(100%)';
     setTimeout(() => {
       if (banner.parentNode) banner.parentNode.removeChild(banner);

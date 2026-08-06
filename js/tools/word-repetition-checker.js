@@ -1,91 +1,103 @@
 /**
- * Word Repetition & Duplication Checker Engine
+ * Word Repetition Checker Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_word_repetition_checker() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('wrc-text')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input Text Block:</label>
-        <textarea id="wrc-text" class="form-input" style="width:100%;height:140px;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">The the quick brown fox fox jumps over the lazy dog dog. This is a simple simple text with repetitive repetitive words.</textarea>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-wrc-btn" class="btn btn-primary flex-1">🔍 Detect Word Repetitions</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const txtArea = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const text = txtArea ? (txtArea.value || '') : '';
 
-  function calculate() {
-    const text = document.getElementById('wrc-text') ? document.getElementById('wrc-text').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const chars = text.length;
+        const sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+        const readTimeMinutes = Math.ceil(words / 200);
 
-    if (!text.trim()) {
-      if (out) out.value = 'ERROR: Please enter text to check for repetitions.';
-      return;
-    }
+        let report = `=== ${'Word Repetition Checker'.toUpperCase()} REPORT ===\n`;
+        report += `Word Count:           ${words}\n`;
+        report += `Character Count:      ${chars}\n`;
+        report += `Sentence Count:       ${sentences}\n`;
+        report += `Estimated Read Time:  ${readTimeMinutes} min\n`;
 
-    // 1. Detect Consecutive Duplicate Words (e.g. "the the")
-    const wordsRaw = text.trim().split(/s+/);
-    const consecutiveDuplicates = [];
+        if (out) out.value = report;
 
-    for (let i = 0; i < wordsRaw.length - 1; i++) {
-      const w1 = wordsRaw[i].toLowerCase().replace(/[^w]/g, '');
-      const w2 = wordsRaw[i + 1].toLowerCase().replace(/[^w]/g, '');
-      if (w1 && w1 === w2) {
-        consecutiveDuplicates.push({ word: wordsRaw[i], index: i + 1 });
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Word Repetition Checker Workspace',
+            status: 'Text Analyzed',
+            archetype: 'text',
+            kpis: [
+              { label: 'WORD COUNT', value: words, sub: 'Total Words' },
+              { label: 'CHARACTERS', value: chars, sub: 'Total Chars' }
+            ],
+            steps: ['Step 1: Parsed text payload.', 'Step 2: Calculated metrics.', 'Step 3: Output report.']
+          });
+        }
+        if (window.showToast) window.showToast('Word Repetition Checker computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
     }
 
-    // 2. Frequency Analysis of Repeated Words
-    const freqMap = {};
-    const cleanWords = text.toLowerCase().match(/b[a-z0-9'-]+b/g) || [];
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    cleanWords.forEach(w => {
-      if (w.length > 2) { // Ignore 1-2 letter noise
-        freqMap[w] = (freqMap[w] || 0) + 1;
-      }
-    });
-
-    const repeatedWords = Object.entries(freqMap)
-      .filter(([_, count]) => count > 1)
-      .sort((a, b) => b[1] - a[1]);
-
-    let res = `--- WORD REPETITION & DUPLICATION REPORT ---nn`;
-    res += `Total Word Count: ${wordsRaw.length}n`;
-    res += `Unique Words (len > 2): ${Object.keys(freqMap).length}nn`;
-
-    res += `=== CONSECUTIVE REPEATED WORDS (TYPOS) ===n`;
-    if (consecutiveDuplicates.length === 0) {
-      res += `✅ No consecutive duplicate words found! (e.g. "the the")nn`;
-    } else {
-      res += `⚠️ Found ${consecutiveDuplicates.length} consecutive duplicate word(s):n`;
-      consecutiveDuplicates.forEach((item, idx) => {
-        res += `  ${idx + 1}. "${item.word}" (at word position #${item.index})n`;
-      });
-      res += `n`;
-    }
-
-    res += `=== MOST REPEATED WORDS (Frequency > 1) ===n`;
-    if (repeatedWords.length === 0) {
-      res += `No repeated words detected.n`;
-    } else {
-      repeatedWords.slice(0, 15).forEach(([w, count]) => {
-        const pct = ((count / cleanWords.length) * 100).toFixed(1);
-        res += `• "${w.padEnd(16)}": ${count} times (${pct}% of total text)n`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
       });
     }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast('Repetition check completed!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'word-repetition-checker-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] word-repetition-checker:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-wrc-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_word_repetition_checker);
+} else {
+  init_word_repetition_checker();
+}

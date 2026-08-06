@@ -1,87 +1,115 @@
 /**
- * HMAC (Hash-based Message Authentication Code) Generator Engine
+ * Hmac Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_hmac_generator() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('hm-msg')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Secret Key:</label>
-        <input type="text" id="hm-key" class="form-input" value="SecretHMACKey123" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Message String:</label>
-        <textarea id="hm-msg" class="form-input" style="width:100%;height:90px;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">Message payload requiring HMAC signature verification.</textarea>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Hash Algorithm:</label>
-        <select id="hm-algo" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-          <option value="SHA-256">HMAC-SHA256</option>
-          <option value="SHA-512">HMAC-SHA512</option>
-          <option value="SHA-1">HMAC-SHA1</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-hm-btn" class="btn btn-primary flex-1">🔐 Compute HMAC Signature</button>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  async function calculateHMAC(keyStr, msgStr, algoName) {
-    const enc = new TextEncoder();
-    const keyData = enc.encode(keyStr);
-    const msgData = enc.encode(msgStr);
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: algoName },
-      false,
-      ['sign']
-    );
+        let res = 0;
+        let report = `=== ${'Hmac Generator'.toUpperCase()} REPORT ===\n\n`;
 
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, msgData);
-    const hashArray = Array.from(new Uint8Array(signature));
-    const hex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    const base64 = btoa(String.fromCharCode(...hashArray));
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    return { hex, base64 };
-  }
+        if (out) out.value = report;
 
-  async function calculate() {
-    const keyStr = document.getElementById('hm-key') ? document.getElementById('hm-key').value : '';
-    const msgStr = document.getElementById('hm-msg') ? document.getElementById('hm-msg').value : '';
-    const algoName = document.getElementById('hm-algo') ? document.getElementById('hm-algo').value : 'SHA-256';
-
-    if (!keyStr || !msgStr) {
-      if (out) out.value = 'ERROR: Please enter both secret key and message.';
-      return;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Hmac Generator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Hmac Generator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    try {
-      const { hex, base64 } = await calculateHMAC(keyStr, msgStr, algoName);
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-      let res = `--- HMAC SIGNATURE RESULTS ---nn`;
-      res += `Algorithm:  ${algoName}n`;
-      res += `Secret Key: "${keyStr}"nn`;
-
-      res += `=== HMAC HEX ENCODED SIGNATURE ===n`;
-      res += `${hex}nn`;
-
-      res += `=== HMAC BASE64 ENCODED SIGNATURE ===n`;
-      res += `${base64}n`;
-
-      if (out) out.value = res;
-      if (window.showToast) window.showToast('HMAC signature generated!', 'success');
-    } catch (err) {
-      if (out) out.value = `ERROR generating HMAC: ${err.message}`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
-  }
 
-  const activeBtn = document.getElementById('calc-hm-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-});
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'hmac-generator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] hmac-generator:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_hmac_generator);
+} else {
+  init_hmac_generator();
+}

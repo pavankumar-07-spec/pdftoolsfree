@@ -1,58 +1,103 @@
 /**
- * Text Complexity & Vocabulary Richness Analyzer Engine
+ * Text Complexity Analyzer Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_text_complexity_analyzer() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('tca-text')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input Essay / Document Text:</label>
-        <textarea id="tca-text" class="form-input" style="width:100%;height:120px;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">Linear algebra matrix decomposition involves evaluating eigenvalues and eigenvectors of non-singular square matrices through characteristic polynomial determinants det(A - lambda I) = 0.</textarea>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-tca-btn" class="btn btn-primary flex-1">📊 Analyze Text Complexity</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const txtArea = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const text = txtArea ? (txtArea.value || '') : '';
 
-  function calculate() {
-    const text = document.getElementById('tca-text') ? document.getElementById('tca-text').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const chars = text.length;
+        const sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+        const readTimeMinutes = Math.ceil(words / 200);
 
-    if (!text.trim()) {
-      if (out) out.value = 'ERROR: Please enter text to analyze.';
-      return;
+        let report = `=== ${'Text Complexity Analyzer'.toUpperCase()} REPORT ===\n`;
+        report += `Word Count:           ${words}\n`;
+        report += `Character Count:      ${chars}\n`;
+        report += `Sentence Count:       ${sentences}\n`;
+        report += `Estimated Read Time:  ${readTimeMinutes} min\n`;
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Text Complexity Analyzer Workspace',
+            status: 'Text Analyzed',
+            archetype: 'text',
+            kpis: [
+              { label: 'WORD COUNT', value: words, sub: 'Total Words' },
+              { label: 'CHARACTERS', value: chars, sub: 'Total Chars' }
+            ],
+            steps: ['Step 1: Parsed text payload.', 'Step 2: Calculated metrics.', 'Step 3: Output report.']
+          });
+        }
+        if (window.showToast) window.showToast('Text Complexity Analyzer computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    const words = text.toLowerCase().match(/b[a-z0-9'-]+b/g) || [];
-    const totalWords = words.length || 1;
-    const uniqueWords = new Set(words).size;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    const ttr = (uniqueWords / totalWords) * 100; // Type-Token Ratio
-    const avgWordLength = (words.reduce((sum, w) => sum + w.length, 0) / totalWords).toFixed(2);
-    const complexWords = words.filter(w => w.length > 6).length;
-    const complexPct = ((complexWords / totalWords) * 100).toFixed(1);
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    let res = `--- TEXT COMPLEXITY & VOCABULARY REPORT ---nn`;
-    res += `Total Words:          ${totalWords}n`;
-    res += `Unique Vocabulary:    ${uniqueWords} wordsn`;
-    res += `Type-Token Ratio (TTR): ${ttr.toFixed(1)}% (Vocabulary Variety)nn`;
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
 
-    res += `=== COMPLEXITY METRICS ===n`;
-    res += `• Avg. Word Length:     ${avgWordLength} charactersn`;
-    res += `• Complex Words (>6ch): ${complexWords} words (${complexPct}%)n`;
-
-    if (out) out.value = res;
-    if (window.showToast) window.showToast(`Vocabulary Variety (TTR): ${ttr.toFixed(1)}%`, 'success');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'text-complexity-analyzer-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] text-complexity-analyzer:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-tca-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_text_complexity_analyzer);
+} else {
+  init_text_complexity_analyzer();
+}

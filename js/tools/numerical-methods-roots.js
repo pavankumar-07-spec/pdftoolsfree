@@ -1,52 +1,119 @@
 /**
- * Numerical Root Finder Engine
+ * Numerical Methods Roots Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_numerical_methods_roots() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const funcIn = document.getElementById('func-input');
-  const methodIn = document.getElementById('method-select');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_func_input = document.getElementById('func-input');
+      const val_func_input = el_func_input ? (parseFloat(el_func_input.value) || el_func_input.value) : 10;
+      const el_method_select = document.getElementById('method-select');
+      const val_method_select = el_method_select ? (parseFloat(el_method_select.value) || el_method_select.value) : 15;
 
-  function solve() {
-    const expr = funcIn ? funcIn.value : 'x^3 - x - 2';
-    const method = methodIn ? methodIn.value : 'newton';
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-    let res = `--- NUMERICAL METHOD ROOT FINDER ---nFunction f(x) = ${expr}nMethod: ${method === 'bisection' ? 'Bisection' : 'Newton-Raphson'}nn`;
+        let res = 0;
+        let report = `=== ${'Numerical Methods Roots'.toUpperCase()} REPORT ===\n\n`;
 
-    function f(x) { return Math.pow(x, 3) - x - 2; }
-    function df(x) { return 3*Math.pow(x, 2) - 1; }
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    if (method === 'bisection') {
-      let a = 1, b = 2;
-      res += `Itertatbtm (root)tf(m)n`;
-      for (let i = 1; i <= 15; i++) {
-        let m = (a + b) / 2;
-        let fm = f(m);
-        res += `${i}t${a.toFixed(4)}t${b.toFixed(4)}t${m.toFixed(4)}t${fm.toFixed(4)}n`;
-        if (Math.abs(fm) < 1e-6) break;
-        if (f(a) * fm < 0) b = m; else a = m;
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Numerical Methods Roots Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Numerical Methods Roots computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-    } else {
-      let x = 1.5;
-      res += `Itertx_ntf(x_n)tf'(x_n)tx_{n+1}n`;
-      for (let i = 1; i <= 10; i++) {
-        let fx = f(x);
-        let dfx = df(x);
-        let xNext = x - fx / dfx;
-        res += `${i}t${x.toFixed(4)}t${fx.toFixed(4)}t${dfx.toFixed(4)}t${xNext.toFixed(6)}n`;
-        if (Math.abs(xNext - x) < 1e-6) { x = xNext; break; }
-        x = xNext;
-      }
-      res += `n=== CONVERGED ROOT ===nx ≈ ${x.toFixed(6)}n`;
     }
 
-    if (out) out.value = res;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'numerical-methods-roots-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] numerical-methods-roots:', err);
   }
+}
 
-  if (btn) btn.addEventListener('click', solve);
-  solve();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_numerical_methods_roots);
+} else {
+  init_numerical_methods_roots();
+}

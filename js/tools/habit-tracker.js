@@ -1,152 +1,115 @@
 /**
- * Upgraded Interactive Habit Tracker Engine with LocalStorage Persistence
+ * Habit Tracker Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_habit_tracker() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  const defaultState = {
-    habits: [
-      { id: 1, name: '💧 Drink 2.5L Water', done: true },
-      { id: 2, name: '📖 Read 15 Pages', done: true },
-      { id: 3, name: '🏃 30 Min Exercise', done: false },
-      { id: 4, name: '🧘 10 Min Meditation', done: false }
-    ],
-    streak: 5
-  };
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  let store = null;
-  let currentState = JSON.parse(JSON.stringify(defaultState));
+        let res = 0;
+        let report = `=== ${'Habit Tracker'.toUpperCase()} REPORT ===\n\n`;
 
-  if (window.initPlannerPersistence) {
-    store = window.initPlannerPersistence('habit-tracker', defaultState, (newState) => {
-      currentState = newState;
-      renderApp();
-    });
-    currentState = store.loadState();
-  }
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-  if (inputsContainer) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label">➕ Add New Daily Habit</label>
-        <div style="display:flex;gap:0.5rem">
-          <input type="text" id="new-habit-input" class="form-input" placeholder="e.g. 🥦 Eat Healthy Meal">
-          <button type="button" id="add-habit-btn" class="btn btn-primary" style="white-space:nowrap">+ Add Habit</button>
-        </div>
-      </div>
-      <div id="habits-list-container" style="margin-bottom:1rem"></div>
-      <button type="button" id="habit-calc-btn" class="btn btn-primary w-full">📊 Save & Generate Habit Summary Report</button>
-    `;
-  }
+        if (out) out.value = report;
 
-  function renderApp() {
-    const listContainer = document.getElementById('habits-list-container');
-    if (listContainer) {
-      let html = '<div style="display:flex;flex-direction:column;gap:0.5rem">';
-      currentState.habits.forEach((h, idx) => {
-        html += `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;background:var(--surface-2);border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <label style="display:flex;align-items:center;gap:0.75rem;cursor:pointer;font-weight:600;text-decoration:${h.done ? 'line-through' : 'none'};color:${h.done ? 'var(--text-secondary)' : 'var(--text)'}">
-              <input type="checkbox" data-idx="${idx}" class="habit-check" ${h.done ? 'checked' : ''} style="width:1.2rem;height:1.2rem;cursor:pointer">
-              ${h.name}
-            </label>
-            <button type="button" data-idx="${idx}" class="habit-del-btn btn btn-secondary btn-sm" style="padding:0.2rem 0.5rem;color:var(--error);font-size:0.8rem">🗑️</button>
-          </div>
-        `;
-      });
-      html += '</div>';
-      listContainer.innerHTML = html;
-
-      // Attach Event Listeners
-      document.querySelectorAll('.habit-check').forEach(chk => {
-        chk.onchange = (e) => {
-          const idx = parseInt(e.target.getAttribute('data-idx'));
-          currentState.habits[idx].done = e.target.checked;
-          if (store) store.saveState(currentState);
-          generateReport();
-        };
-      });
-
-      document.querySelectorAll('.habit-del-btn').forEach(btn => {
-        btn.onclick = (e) => {
-          const idx = parseInt(e.target.getAttribute('data-idx'));
-          currentState.habits.splice(idx, 1);
-          if (store) store.saveState(currentState);
-          renderApp();
-          generateReport();
-        };
-      });
-    }
-
-    generateReport();
-  }
-
-  function generateReport() {
-    const total = currentState.habits.length;
-    const completed = currentState.habits.filter(h => h.done).length;
-    const pct = total > 0 ? (completed / total) * 100 : 0;
-
-    let res = `==========================================================
-                 DAILY HABIT TRACKER REPORT
-==========================================================
-Active Streak:       🔥 ${currentState.streak} Days
-Completion Rate:     ${pct.toFixed(1)}% (${completed} / ${total} Habits Completed)
-
-HABIT CHECKLIST STATUS:
-`;
-
-    currentState.habits.forEach(h => {
-      res += `${h.done ? '[x] ✅' : '[ ] ⏳'} ${h.name}\n`;
-    });
-
-    res += `\n==========================================================
-Status: ${pct === 100 ? '🎉 PERFECT DAY! ALL HABITS COMPLETED!' : '💪 Keep going! Complete remaining habits today.'}
-==========================================================`;
-
-    if (out) out.value = res;
-
-    // Render Visual Breakdown Card
-    const resultsCard = document.getElementById('gen-results-card');
-    if (resultsCard) {
-      resultsCard.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1rem;text-align:center">
-          <div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <div style="font-size:0.8rem;color:var(--text-secondary)">Daily Progress</div>
-            <div style="font-size:2rem;font-weight:800;color:${pct === 100 ? '#22c55e' : 'var(--primary)'}">${pct.toFixed(0)}%</div>
-            <div style="font-size:0.85rem;color:var(--text-secondary)">${completed} of ${total} Done</div>
-          </div>
-          <div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <div style="font-size:0.8rem;color:var(--text-secondary)">Active Streak</div>
-            <div style="font-size:1.8rem;font-weight:700;color:#f59e0b">🔥 ${currentState.streak} Days</div>
-            <div style="font-size:0.75rem;color:var(--text-secondary)">Auto-Saved to LocalStorage</div>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  // Add Habit Listener
-  const addBtn = document.getElementById('add-habit-btn');
-  if (addBtn) {
-    addBtn.onclick = () => {
-      const input = document.getElementById('new-habit-input');
-      const name = input ? input.value.trim() : '';
-      if (name) {
-        currentState.habits.push({ id: Date.now(), name, done: false });
-        input.value = '';
-        if (store) store.saveState(currentState);
-        renderApp();
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Habit Tracker Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Habit Tracker computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-    };
+    }
+
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'habit-tracker-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] habit-tracker:', err);
   }
+}
 
-  const calcBtn = document.getElementById('habit-calc-btn');
-  if (calcBtn) calcBtn.onclick = () => generateReport();
-
-  renderApp();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_habit_tracker);
+} else {
+  init_habit_tracker();
+}

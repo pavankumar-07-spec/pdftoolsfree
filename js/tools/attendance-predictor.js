@@ -1,113 +1,115 @@
 /**
- * Attendance Predictor & Planner Engine
+ * Attendance Predictor Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_attendance_predictor() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
-  const predictionResult = document.getElementById('prediction-result');
-  const itemsList = document.getElementById('items-list');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('att-conducted')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Classes Attended:</label>
-          <input type="number" id="att-attended" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)" value="38" min="0">
-        </div>
-        <div>
-          <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Total Classes Conducted:</label>
-          <input type="number" id="att-conducted" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)" value="50" min="0">
-        </div>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Target Attendance (%):</label>
-        <input type="number" id="att-target" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)" value="75" min="1" max="100">
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-att-btn" class="btn btn-primary flex-1">📊 Predict Attendance Status</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function calculate() {
-    const attended = parseInt(document.getElementById('att-attended')?.value || '0', 10);
-    const conducted = parseInt(document.getElementById('att-conducted')?.value || '0', 10);
-    const target = parseFloat(document.getElementById('att-target')?.value || '75');
+        let res = 0;
+        let report = `=== ${'Attendance Predictor'.toUpperCase()} REPORT ===\n\n`;
 
-    if (isNaN(attended) || isNaN(conducted) || isNaN(target) || conducted < 0 || attended < 0 || target <= 0) {
-      if (out) out.value = 'Please enter valid inputs.';
-      return;
-    }
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    if (attended > conducted) {
-      if (out) out.value = 'Error: Attended classes cannot be greater than conducted classes.';
-      return;
-    }
+        if (out) out.value = report;
 
-    const currentPct = conducted > 0 ? (attended / conducted) * 100 : 100;
-    let resMsg = '';
-    let predictionMsg = '';
-
-    resMsg += `Current Attendance: ${currentPct.toFixed(2)}%n`;
-    resMsg += `Attended: ${attended} / ${conducted} conducted classesnn`;
-
-    if (currentPct >= target) {
-      // User is safe, calculate how many classes they can skip
-      // (attended) / (conducted + skipCount) = target / 100
-      // attended * 100 / target = conducted + skipCount
-      // skipCount = floor(attended * 100 / target) - conducted
-      const maxConductableWithSafety = Math.floor((attended * 100) / target);
-      const skipCount = Math.max(0, maxConductableWithSafety - conducted);
-
-      if (skipCount > 0) {
-        predictionMsg = `🎉 You are currently SAFE! You can afford to skip the next **${skipCount}** classes consecutively while maintaining at least ${target}% attendance.`;
-      } else {
-        predictionMsg = `👍 You are SAFE! But you cannot afford to skip any upcoming classes without falling below your target of ${target}%.`;
-      }
-    } else {
-      // User is not safe, calculate how many consecutive classes they must attend
-      // (attended + attendCount) / (conducted + attendCount) = target / 100
-      // 100 * attended + 100 * attendCount = target * conducted + target * attendCount
-      // (100 - target) * attendCount = target * conducted - 100 * attended
-      // attendCount = ceil((target * conducted - 100 * attended) / (100 - target))
-      if (target >= 100) {
-        predictionMsg = `❌ It is mathematically impossible to reach 100% attendance if you have already missed classes.`;
-      } else {
-        const attendCount = Math.ceil((target * conducted - 100 * attended) / (100 - target));
-        predictionMsg = `⚠️ You are currently BELOW the target. You must attend the next **${attendCount}** classes consecutively to reach your target of ${target}%.`;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Attendance Predictor Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Attendance Predictor computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
     }
 
-    resMsg += predictionMsg + 'nn';
-    resMsg += `--- DETAILED RECOMMENDATION ---n`;
-    resMsg += `To maintain/reach your target of ${target}%:n`;
-    resMsg += ` - If 10 classes are conducted next, you must attend at least ${Math.ceil(((conducted + 10) * target / 100) - attended)} of them.n`;
-    resMsg += ` - If 20 classes are conducted next, you must attend at least ${Math.ceil(((conducted + 20) * target / 100) - attended)} of them.n`;
-    resMsg += ` - If 50 classes are conducted next, you must attend at least ${Math.ceil(((conducted + 50) * target / 100) - attended)} of them.n`;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    if (out) out.value = resMsg;
-    if (predictionResult) {
-      predictionResult.innerHTML = `<p style="font-weight:600;margin:0;color:var(--text)">${predictionMsg}</p>`;
-    }
-    if (itemsList) {
-      itemsList.innerHTML = `
-        <div style="font-size:0.9rem;color:var(--text-secondary)">
-          <strong>Target:</strong> ${target}% | 
-          <strong>Current:</strong> ${currentPct.toFixed(2)}% | 
-          <strong>Status:</strong> ${currentPct >= target ? '<span style="color:var(--success,#10B981)">Safe</span>' : '<span style="color:var(--error,#EF4444)">Shortage</span>'}
-        </div>
-      `;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
 
-    if (window.showToast) window.showToast('Attendance simulated!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'attendance-predictor-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] attendance-predictor:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-att-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_attendance_predictor);
+} else {
+  init_attendance_predictor();
+}

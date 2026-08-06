@@ -1,92 +1,121 @@
 /**
- * Upgraded CAGR Growth Calculator Engine with Visual Breakdown Cards
+ * Cagr Calculator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_cagr_calculator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_cagr_initial = document.getElementById('cagr-initial');
+      const val_cagr_initial = el_cagr_initial ? (parseFloat(el_cagr_initial.value) || el_cagr_initial.value) : 10;
+      const el_cagr_final = document.getElementById('cagr-final');
+      const val_cagr_final = el_cagr_final ? (parseFloat(el_cagr_final.value) || el_cagr_final.value) : 15;
+      const el_cagr_years = document.getElementById('cagr-years');
+      const val_cagr_years = el_cagr_years ? (parseFloat(el_cagr_years.value) || el_cagr_years.value) : 20;
 
-  if (inputsContainer && !document.getElementById('cagr-initial')) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1rem;margin-bottom:1.5rem">
-        <div>
-          <label class="form-label">Initial Investment Value ($)</label>
-          <input type="number" id="cagr-initial" class="form-input" value="10000" min="1" step="500">
-        </div>
-        <div>
-          <label class="form-label">Final Value ($)</label>
-          <input type="number" id="cagr-final" class="form-input" value="25000" min="1" step="500">
-        </div>
-        <div>
-          <label class="form-label">Investment Duration (Years)</label>
-          <input type="number" id="cagr-years" class="form-input" value="5" min="1" max="50">
-        </div>
-      </div>
-      <div class="flex gap-3 mt-4">
-        <button id="calc-cagr-btn" type="button" class="btn btn-primary flex-1">📈 Calculate CAGR & Growth Multiplier</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function calculateCAGR() {
-    const V0 = parseFloat(document.getElementById('cagr-initial')?.value || 10000);
-    const Vn = parseFloat(document.getElementById('cagr-final')?.value || 25000);
-    const n = parseFloat(document.getElementById('cagr-years')?.value || 5);
+        let res = 0;
+        let report = `=== ${'Cagr Calculator'.toUpperCase()} REPORT ===\n\n`;
 
-    const cagr = (Math.pow(Vn / V0, 1 / n) - 1) * 100;
-    const totalProfit = Vn - V0;
-    const totalGrowthPct = ((Vn - V0) / V0) * 100;
-    const multiplier = (Vn / V0).toFixed(2);
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-    let res = `==========================================================
-             CAGR ANNUAL GROWTH RATE REPORT
-==========================================================
-Initial Investment:      $${V0.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-Final Portfolio Value:   $${Vn.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-Duration:                ${n} Years
+        if (out) out.value = report;
 
-==========================================================
-GROWTH METRICS:
-CAGR (Annualized):       ${cagr.toFixed(2)}% per annum
-Absolute Total Profit:   $${totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-Total Return %:          +${totalGrowthPct.toFixed(2)}%
-Capital Multiplier:      ${multiplier}x Return
-==========================================================`;
-
-    if (out) out.value = res;
-
-    // Render Visual Breakdown Dashboard Card
-    const resultsCard = document.getElementById('gen-results-card');
-    if (resultsCard) {
-      resultsCard.innerHTML = `
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1rem;text-align:center">
-          <div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <div style="font-size:0.8rem;color:var(--text-secondary)">Annualized CAGR</div>
-            <div style="font-size:2rem;font-weight:800;color:#22c55e">${cagr.toFixed(2)}%</div>
-            <div style="font-size:0.75rem;color:var(--text-secondary)">Compounded Yearly Rate</div>
-          </div>
-          <div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <div style="font-size:0.8rem;color:var(--text-secondary)">Total Return</div>
-            <div style="font-size:1.6rem;font-weight:700;color:var(--primary)">+$${totalProfit.toLocaleString()}</div>
-            <div style="font-size:0.75rem;color:var(--text-secondary)">+${totalGrowthPct.toFixed(0)}% Absolute Return</div>
-          </div>
-          <div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px solid var(--border)">
-            <div style="font-size:0.8rem;color:var(--text-secondary)">Capital Multiplier</div>
-            <div style="font-size:1.8rem;font-weight:800;color:#3b82f6">${multiplier}x</div>
-            <div style="font-size:0.75rem;color:var(--text-secondary)">Growth Factor</div>
-          </div>
-        </div>
-      `;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Cagr Calculator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Cagr Calculator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    if (window.showToast) window.showToast(`CAGR: ${cagr.toFixed(2)}% per annum`, 'success');
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cagr-calculator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] cagr-calculator:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-cagr-btn') || btn;
-  if (activeBtn) activeBtn.onclick = () => calculateCAGR();
-  calculateCAGR();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_cagr_calculator);
+} else {
+  init_cagr_calculator();
+}

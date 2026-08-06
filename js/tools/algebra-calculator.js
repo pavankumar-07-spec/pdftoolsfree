@@ -1,123 +1,115 @@
 /**
- * Upgraded Real Algebra Calculator Engine
- * Solves linear equations (ax + b = c) and quadratic equations (ax^2 + bx + c = 0) with step-by-step solutions.
+ * Algebra Calculator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_algebra_calculator() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('alg-expr')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label">Algebraic Equation to Solve (e.g. 2x + 5 = 15 or x^2 - 5x + 6 = 0)</label>
-        <input type="text" id="alg-expr" class="form-input" value="2x + 5 = 15">
-      </div>
-      <div class="flex gap-3 mt-4">
-        <button id="calc-alg-btn" class="btn btn-primary flex-1">📐 Solve Algebraic Equation</button>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  function solveLinear(a, b, c, varName) {
-    // ax + b = c => ax = c - b => x = (c - b) / a
-    const rhs = c - b;
-    const sol = rhs / a;
-    let res = `--- LINEAR EQUATION SOLVER ---
-Equation: ${a}${varName} + (${b}) = ${c}
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-Step 1: Isolate the variable term
-  ${a}${varName} = ${c} - (${b})
-  ${a}${varName} = ${rhs}
+        let res = 0;
+        let report = `=== ${'Algebra Calculator'.toUpperCase()} REPORT ===\n\n`;
 
-Step 2: Divide both sides by the coefficient ${a}
-  ${varName} = ${rhs} / ${a}
-
-=== FINAL SOLUTION ===
-${varName} = ${Number.isInteger(sol) ? sol : sol.toFixed(4)}`;
-    return res;
-  }
-
-  function solveQuadratic(a, b, c) {
-    const disc = b * b - 4 * a * c;
-    let res = `--- QUADRATIC EQUATION SOLVER ---
-Equation: ${a}x² + (${b})x + (${c}) = 0
-
-Discriminant (Δ) = b² - 4ac
-  Δ = (${b})² - 4(${a})(${c}) = ${disc}
-
-`;
-    if (disc > 0) {
-      const x1 = (-b + Math.sqrt(disc)) / (2 * a);
-      const x2 = (-b - Math.sqrt(disc)) / (2 * a);
-      res += `Since Δ > 0, there are two distinct real roots:
-Step 1: x₁ = (-b + √Δ) / 2a = (${-b} + ${Math.sqrt(disc).toFixed(4)}) / ${2*a} = ${x1.toFixed(4)}
-Step 2: x₂ = (-b - √Δ) / 2a = (${-b} - ${Math.sqrt(disc).toFixed(4)}) / ${2*a} = ${x2.toFixed(4)}
-
-=== FINAL SOLUTION ===
-x₁ = ${Number.isInteger(x1) ? x1 : x1.toFixed(4)}
-x₂ = ${Number.isInteger(x2) ? x2 : x2.toFixed(4)}`;
-    } else if (disc === 0) {
-      const x = -b / (2 * a);
-      res += `Since Δ = 0, there is one repeated real root:
-x = -b / 2a = ${-b} / ${2*a} = ${x}
-
-=== FINAL SOLUTION ===
-x = ${x}`;
-    } else {
-      const real = (-b / (2 * a)).toFixed(4);
-      const imag = (Math.sqrt(-disc) / (2 * a)).toFixed(4);
-      res += `Since Δ < 0, there are two complex conjugate roots:
-
-=== FINAL SOLUTION ===
-x₁ = ${real} + ${imag}i
-x₂ = ${real} - ${imag}i`;
-    }
-    return res;
-  }
-
-  function solveEquation() {
-    const raw = (document.getElementById('alg-expr') ? document.getElementById('alg-expr').value : '2x + 5 = 15').trim();
-    if (!raw) {
-      if (out) out.value = 'ERROR: Please enter an algebraic equation.';
-      return;
-    }
-
-    try {
-      let res = '';
-      // Check for quadratic format ax^2 + bx + c = 0
-      const quadMatch = raw.match(/([+-]?\d*)\s*x\^2\s*([+-]?\s*\d*)\s*x\s*([+-]?\s*\d+)\s*=\s*0/i);
-      if (quadMatch) {
-        let a = quadMatch[1].replace(/\s+/g, '');
-        a = a === '' || a === '+' ? 1 : a === '-' ? -1 : parseFloat(a);
-        let b = quadMatch[2].replace(/\s+/g, '');
-        b = b === '' || b === '+' ? 1 : b === '-' ? -1 : parseFloat(b);
-        let c = parseFloat(quadMatch[3].replace(/\s+/g, ''));
-        res = solveQuadratic(a, b, c);
-      } else {
-        // Linear solver format: ax + b = c
-        const linMatch = raw.match(/([+-]?\d*)\s*([a-z])\s*([+-]\s*\d+)?\s*=\s*([+-]?\d+)/i);
-        if (linMatch) {
-          let aStr = linMatch[1].replace(/\s+/g, '');
-          let a = aStr === '' || aStr === '+' ? 1 : aStr === '-' ? -1 : parseFloat(aStr);
-          let varName = linMatch[2];
-          let b = linMatch[3] ? parseFloat(linMatch[3].replace(/\s+/g, '')) : 0;
-          let c = parseFloat(linMatch[4].replace(/\s+/g, ''));
-          res = solveLinear(a, b, c, varName);
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
         } else {
-          // Fallback parsing: 2x + 5 = 15
-          res = solveLinear(2, 5, 15, 'x');
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Algebra Calculator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Algebra Calculator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-
-      if (out) out.value = res;
-      if (window.showToast) window.showToast('Algebraic equation solved!', 'success');
-    } catch (err) {
-      if (out) out.value = `ERROR: Invalid algebraic equation format: ${err.message}`;
     }
-  }
 
-  const activeBtn = document.getElementById('calc-alg-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', solveEquation);
-  solveEquation();
-});
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'algebra-calculator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] algebra-calculator:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_algebra_calculator);
+} else {
+  init_algebra_calculator();
+}

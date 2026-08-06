@@ -1,0 +1,505 @@
+/* ==========================================================================
+   S-TIER ULTRA-SMOOTH & CRYSTAL-CLEAR UI COMPONENTS & DASHBOARD CSS
+   pdftoolsfree.in
+   ========================================================================== */
+
+/* ── Modern Design Tokens & Glassmorphic Variables ── */
+:root {
+  --card-glass-bg: rgba(255, 255, 255, 0.94);
+  --card-glass-border: rgba(255, 90, 31, 0.2);
+  --card-glass-glow: rgba(255, 90, 31, 0.18);
+  --card-shadow-premium: 0 12px 32px -6px rgba(0, 0, 0, 0.06), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+  --card-shadow-hover: 0 20px 40px -8px rgba(255, 90, 31, 0.22), 0 8px 16px -4px rgba(0, 0, 0, 0.06);
+  --gradient-primary-glow: linear-gradient(135deg, #FF5A1F 0%, #FF8A00 100%);
+  --gradient-accent-subtle: linear-gradient(135deg, rgba(255, 90, 31, 0.08) 0%, rgba(255, 138, 0, 0.03) 100%);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] {
+  --card-glass-bg: rgba(15, 23, 42, 0.94);
+  --card-glass-border: rgba(255, 90, 31, 0.3);
+  --card-glass-glow: rgba(255, 90, 31, 0.28);
+  --card-shadow-premium: 0 12px 32px -6px rgba(0, 0, 0, 0.5), 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 20px 40px -8px rgba(255, 90, 31, 0.35), 0 8px 20px -4px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Global Smooth Transitions & Micro-Interactions ── */
+.glass-card, .kpi-card, .btn, .form-input, .file-dropzone-modern, .slider-container input[type="range"], .segmented-control button, .toast-notification {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Form Inputs with Crystal Clarity ── */
+.form-group-modern {
+  margin-bottom: 1.25rem;
+  position: relative;
+}
+
+.form-label-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text, #0f172a);
+  margin-bottom: 0.4rem;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.input-with-unit .form-input {
+  flex: 1;
+  padding-right: 4rem;
+  border-radius: 10px;
+  border: 1.5px solid var(--card-glass-border);
+  background: var(--surface-1, #ffffff);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text, #0f172a);
+  transition: border-color 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-spring);
+}
+
+.input-with-unit .form-input:focus {
+  border-color: var(--primary, #FF5A1F);
+  box-shadow: 0 0 0 3.5px var(--card-glass-glow);
+  outline: none;
+}
+
+.unit-badge {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--primary, #FF5A1F);
+  background: var(--primary-light, rgba(255, 90, 31, 0.12));
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  pointer-events: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Smooth Interactive Range Slider */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--surface-2, rgba(241, 245, 249, 0.6));
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--card-glass-border);
+  transition: border-color 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-spring);
+}
+
+.slider-container:hover {
+  border-color: var(--primary, #FF5A1F);
+  box-shadow: 0 4px 16px -2px var(--card-glass-glow);
+}
+
+.slider-container input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary, #FF5A1F);
+  height: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: var(--border, rgba(0,0,0,0.12));
+  transition: transform 0.2s var(--ease-spring);
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb {
+  transition: transform 0.2s var(--ease-spring), box-shadow 0.2s var(--ease-spring);
+}
+
+.slider-container input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 10px rgba(255, 90, 31, 0.5);
+}
+
+.slider-val-badge {
+  font-family: var(--font-mono, monospace);
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--primary, #FF5A1F);
+  min-width: 4rem;
+  text-align: right;
+  background: var(--bg-surface, #ffffff);
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(255, 90, 31, 0.12);
+  transition: transform 0.2s var(--ease-spring);
+}
+
+/* Segmented Option Controls with Smooth Pill Transitions */
+.segmented-control {
+  display: flex;
+  background: var(--surface-2, #f1f5f9);
+  padding: 5px;
+  border-radius: 12px;
+  gap: 4px;
+  border: 1px solid var(--card-glass-border);
+  position: relative;
+}
+
+.segmented-control button {
+  flex: 1;
+  padding: 0.5rem 0.85rem;
+  border: none;
+  background: transparent;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--text-secondary, #64748b);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s var(--ease-spring);
+  position: relative;
+  z-index: 1;
+}
+
+.segmented-control button:hover {
+  color: var(--primary, #FF5A1F);
+}
+
+.segmented-control button.active {
+  background: var(--bg-surface, #ffffff);
+  color: var(--primary, #FF5A1F);
+  box-shadow: 0 4px 14px rgba(255, 90, 31, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Modern Drag & Drop File Zone */
+.file-dropzone-modern {
+  border: 2px dashed var(--card-glass-border);
+  background: var(--gradient-accent-subtle);
+  border-radius: 14px;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+}
+
+.file-dropzone-modern:hover {
+  border-color: var(--primary, #FF5A1F);
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* ── Rich Visual Dashboard Cards (O/P) ── */
+.results-dashboard-card {
+  background: var(--card-glass-bg);
+  border: 1.5px solid var(--card-glass-border);
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow-premium);
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(16px);
+  animation: slideUpFade 0.4s var(--ease-spring);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--border, rgba(0,0,0,0.08));
+}
+
+.dashboard-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.dashboard-status-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #10B981;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.dashboard-status-tag:hover {
+  transform: scale(1.05);
+}
+
+/* KPI Metric Cards Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.kpi-card {
+  background: var(--surface-2, rgba(241, 245, 249, 0.75));
+  border: 1px solid var(--card-glass-border);
+  border-radius: 14px;
+  padding: 1.1rem 0.85rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 28px -6px rgba(255, 90, 31, 0.22);
+  border-color: var(--primary, #FF5A1F);
+}
+
+.kpi-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary, #64748b);
+  margin-bottom: 0.4rem;
+}
+
+.kpi-value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  background: var(--gradient-primary-glow);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.15;
+  transition: transform 0.3s var(--ease-spring);
+}
+
+.kpi-sub {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  margin-top: 0.25rem;
+}
+
+/* HD Vector Diagram / Canvas Box */
+.canvas-diagram-box {
+  background: var(--surface-1, #ffffff);
+  border: 1px solid var(--card-glass-border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.02);
+  transition: border-color 0.3s var(--ease-spring), box-shadow 0.3s var(--ease-spring);
+}
+
+.canvas-diagram-box:hover {
+  box-shadow: 0 8px 24px -4px rgba(255, 90, 31, 0.15);
+}
+
+.canvas-diagram-box canvas, .canvas-diagram-box svg {
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(255, 90, 31, 0.18));
+}
+
+/* Dynamic Pulse SVG Animation */
+.pulse-node {
+  animation: pulseGlow 2s infinite var(--ease-spring);
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; filter: drop-shadow(0 0 8px rgba(255, 90, 31, 0.8)); }
+  100% { transform: scale(1); opacity: 0.9; }
+}
+
+/* Step-by-Step Breakdown Box */
+.step-box-container {
+  background: var(--surface-2, #f8fafc);
+  border-left: 4px solid var(--primary, #FF5A1F);
+  padding: 1.1rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+  line-height: 1.65;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+  border-top: 1px solid var(--card-glass-border);
+  border-right: 1px solid var(--card-glass-border);
+  border-bottom: 1px solid var(--card-glass-border);
+}
+
+.step-box-title {
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: var(--text, #0f172a);
+}
+
+/* Floating Action Toolbar */
+.action-toolbar {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.action-toolbar .btn {
+  font-size: 0.825rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  border: 1px solid var(--card-glass-border);
+}
+
+.action-toolbar .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 90, 31, 0.22);
+}
+
+/* Fluid Toast Notification Popups */
+.toast-notification {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 9999;
+  background: var(--card-glass-bg);
+  border: 1.5px solid var(--card-glass-border);
+  backdrop-filter: blur(16px);
+  padding: 0.85rem 1.4rem;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow-hover);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  animation: toastSlideIn 0.35s var(--ease-spring);
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── 8 Bespoke Tool UI Archetype Layouts ── */
+
+/* 1. PDF Workspace Archetype */
+.pdf-workspace-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.pdf-thumb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.pdf-thumb-card {
+  background: var(--surface-1, #fff);
+  border: 1px solid var(--card-glass-border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+/* 2. Image Workspace Archetype */
+.image-workspace-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.image-compare-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  background: var(--surface-2, #f8fafc);
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--card-glass-border);
+}
+@media (max-width: 640px) {
+  .image-compare-box { grid-template-columns: 1fr; }
+}
+
+/* 3. Split Editor Archetype (Dev & Text) */
+.split-editor-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
+@media (max-width: 768px) {
+  .split-editor-container { grid-template-columns: 1fr; }
+}
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.editor-pane textarea {
+  width: 100%;
+  min-height: 180px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.875rem;
+  padding: 0.85rem;
+  border-radius: 10px;
+  border: 1px solid var(--card-glass-border);
+  background: var(--surface-1, #ffffff);
+  color: var(--text, #0f172a);
+  resize: vertical;
+}
+
+/* 4. CSS & Design Preview Stage Archetype */
+.css-preview-box {
+  width: 100%;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-2, #f8fafc);
+  border-radius: 14px;
+  border: 1px solid var(--card-glass-border);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* 5. Math Iteration Table Archetype */
+.math-iteration-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.math-iteration-table th, .math-iteration-table td {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--card-glass-border);
+  text-align: center;
+}
+.math-iteration-table th {
+  background: var(--primary-light, rgba(255, 90, 31, 0.1));
+  color: var(--primary, #FF5A1F);
+  font-weight: 800;
+}

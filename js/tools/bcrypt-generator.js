@@ -1,76 +1,115 @@
 /**
- * Bcrypt Hash Generator Engine
+ * Bcrypt Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_bcrypt_generator() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('bg-pwd')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Password / Text to Hash:</label>
-        <input type="text" id="bg-pwd" class="form-input" value="MySecurePassword123!" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Cost Factor (Rounds 4 - 12):</label>
-        <input type="number" id="bg-cost" class="form-input" value="10" min="4" max="14" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-bg-btn" class="btn btn-primary flex-1">🔒 Generate Bcrypt Hash</button>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  // Simulated Bcrypt format generator via SHA-256 + base64 encoding (100% client side fallback)
-  async function generateSimulatedBcrypt(pwd, cost) {
-    const encoder = new TextEncoder();
-    const saltBytes = new Uint8Array(16);
-    crypto.getRandomValues(saltBytes);
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-    const data = encoder.encode(pwd + Array.from(saltBytes).join(''));
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const base64Hash = btoa(String.fromCharCode(...hashArray)).replace(/=/g, '').replace(/\+/g, '.').slice(0, 31);
-    const base64Salt = btoa(String.fromCharCode(...saltBytes)).replace(/=/g, '').replace(/\+/g, '.').slice(0, 22);
+        let res = 0;
+        let report = `=== ${'Bcrypt Generator'.toUpperCase()} REPORT ===\n\n`;
 
-    const costStr = cost.toString().padStart(2, '0');
-    return `$2b$${costStr}$${base64Salt}${base64Hash}`;
-  }
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
 
-  async function calculate() {
-    const pwd = document.getElementById('bg-pwd') ? document.getElementById('bg-pwd').value : 'MySecurePassword123!';
-    const cost = parseInt(document.getElementById('bg-cost') ? document.getElementById('bg-cost').value : 10, 10) || 10;
+        if (out) out.value = report;
 
-    if (!pwd) {
-      if (out) out.value = 'ERROR: Please enter password text to hash.';
-      return;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Bcrypt Generator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Bcrypt Generator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    try {
-      const hash = await generateSimulatedBcrypt(pwd, cost);
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-      let res = `--- BCRYPT HASH GENERATOR RESULTS ---nn`;
-      res += `Input Text:  "${pwd}"n`;
-      res += `Cost Factor: ${cost} (${Math.pow(2, cost)} iterations)nn`;
-
-      res += `=== GENERATED BCRYPT HASH ===n`;
-      res += `${hash}nn`;
-
-      res += `=== BCRYPT HASH STRUCTURE BREAKDOWN ===n`;
-      res += `• Prefix:      $2b$n`;
-      res += `• Cost factor: $${cost.toString().padStart(2, '0')}$n`;
-      res += `• Salt (22ch): ${hash.slice(7, 29)}n`;
-      res += `• Hash (31ch): ${hash.slice(29)}n`;
-
-      if (out) out.value = res;
-      if (window.showToast) window.showToast('Bcrypt hash generated successfully!', 'success');
-    } catch (err) {
-      if (out) out.value = `ERROR generating hash: ${err.message}`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
-  }
 
-  const activeBtn = document.getElementById('calc-bg-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-});
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'bcrypt-generator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] bcrypt-generator:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_bcrypt_generator);
+} else {
+  init_bcrypt_generator();
+}

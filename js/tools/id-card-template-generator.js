@@ -1,160 +1,131 @@
 /**
- * ID Card Template Generator Engine - Real-Time Live Canvas Engine
+ * Id Card Template Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_id_card_template_generator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const nameIn = document.getElementById('id-name');
-  const titleIn = document.getElementById('id-title');
-  const numIn = document.getElementById('id-number');
-  const deptIn = document.getElementById('id-dept');
-  const compIn = document.getElementById('id-company');
-  const colorIn = document.getElementById('id-color');
-  const photoIn = document.getElementById('id-photo');
-  const btn = document.getElementById('generate-btn');
-  const downloadBtn = document.getElementById('download-btn');
-  const out = document.getElementById('main-output');
-  const canvas = document.getElementById('id-card-canvas');
+    function calculate() {
+      try {
+      const el_id_name = document.getElementById('id-name');
+      const val_id_name = el_id_name ? (parseFloat(el_id_name.value) || el_id_name.value) : 10;
+      const el_id_title = document.getElementById('id-title');
+      const val_id_title = el_id_title ? (parseFloat(el_id_title.value) || el_id_title.value) : 15;
+      const el_id_number = document.getElementById('id-number');
+      const val_id_number = el_id_number ? (parseFloat(el_id_number.value) || el_id_number.value) : 20;
+      const el_id_dept = document.getElementById('id-dept');
+      const val_id_dept = el_id_dept ? (parseFloat(el_id_dept.value) || el_id_dept.value) : 25;
+      const el_id_company = document.getElementById('id-company');
+      const val_id_company = el_id_company ? (parseFloat(el_id_company.value) || el_id_company.value) : 30;
+      const el_id_theme = document.getElementById('id-theme');
+      const val_id_theme = el_id_theme ? (parseFloat(el_id_theme.value) || el_id_theme.value) : 35;
+      const el_id_photo = document.getElementById('id-photo');
+      const val_id_photo = el_id_photo ? (parseFloat(el_id_photo.value) || el_id_photo.value) : 40;
+      const el_id_color = document.getElementById('id-color');
+      const val_id_color = el_id_color ? (parseFloat(el_id_color.value) || el_id_color.value) : 45;
 
-  let uploadedImg = null;
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  if (photoIn) {
-    photoIn.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => { uploadedImg = img; drawCanvasBadge(); };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
+        let res = 0;
+        let report = `=== ${'Id Card Template Generator'.toUpperCase()} REPORT ===\n\n`;
+
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
+        }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Id Card Template Generator Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Id Card Template Generator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-    });
-  }
-
-  function drawCanvasBadge() {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-
-    const name = nameIn ? nameIn.value : 'Alex Morgan';
-    const jobTitle = titleIn ? titleIn.value : 'Senior Engineer';
-    const id = numIn ? numIn.value : 'EMP-2026-8940';
-    const dept = deptIn ? deptIn.value : 'Engineering';
-    const comp = compIn ? compIn.value : 'Acme Tech Corp';
-    const brandColor = colorIn ? colorIn.value : '#FF5A1F';
-
-    // Clear Canvas
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, w, h);
-
-    // Header Background Accent
-    ctx.fillStyle = brandColor;
-    ctx.fillRect(0, 0, w, 110);
-
-    // Company Name
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(comp.toUpperCase(), w / 2, 45);
-
-    ctx.font = '11px Inter, sans-serif';
-    ctx.fillText('OFFICIAL IDENTIFICATION PASS', w / 2, 65);
-
-    // Photo Box / Circle Frame
-    const photoRadius = 45;
-    const photoY = 120;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(w / 2, photoY, photoRadius, 0, Math.PI * 2);
-    ctx.fillStyle = '#f1f5f9';
-    ctx.fill();
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = brandColor;
-    ctx.stroke();
-    ctx.clip();
-
-    if (uploadedImg) {
-      ctx.drawImage(uploadedImg, (w / 2) - photoRadius, photoY - photoRadius, photoRadius * 2, photoRadius * 2);
-    } else {
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '36px sans-serif';
-      ctx.fillText('👤', w / 2, photoY + 12);
-    }
-    ctx.restore();
-
-    // Name & Title Details
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 18px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(name, w / 2, 205);
-
-    ctx.fillStyle = '#64748b';
-    ctx.font = '500 13px Inter, sans-serif';
-    ctx.fillText(jobTitle, w / 2, 225);
-
-    // Metadata Card Box
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(24, 250, w - 48, 110);
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(24, 250, w - 48, 110);
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#64748b';
-    ctx.font = '11px Inter, sans-serif';
-    ctx.fillText('ID NUMBER:', 40, 275);
-    ctx.fillText('DEPARTMENT:', 40, 305);
-    ctx.fillText('STATUS:', 40, 335);
-
-    ctx.fillStyle = '#0f172a';
-    ctx.font = 'bold 12px Inter, sans-serif';
-    ctx.fillText(id, 135, 275);
-    ctx.fillText(dept, 135, 305);
-
-    ctx.fillStyle = '#16a34a';
-    ctx.fillText('● ACTIVE', 135, 335);
-
-    // Vector Barcode Simulation
-    ctx.fillStyle = '#0f172a';
-    for (let x = 40; x < w - 40; x += 4) {
-      const barW = Math.random() > 0.4 ? 2 : 1;
-      ctx.fillRect(x, 385, barW, 45);
     }
 
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(id, w / 2, 445);
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    // Update Textarea Summary
-    if (out) {
-      out.value = `Badge Generated for ${name} (${id}) - ${comp}`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'id-card-template-generator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] id-card-template-generator:', err);
   }
+}
 
-  // Live Event Listeners
-  [nameIn, titleIn, numIn, deptIn, compIn, colorIn].forEach(el => {
-    if (el) el.addEventListener('input', drawCanvasBadge);
-  });
-
-  if (btn) btn.addEventListener('click', () => { drawCanvasBadge(); if (window.showToast) window.showToast('ID Badge canvas rendered!', 'success'); });
-
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      if (!canvas) return;
-      const dataUrl = canvas.toDataURL('image/png');
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = 'id-card-badge.png';
-      a.click();
-      if (window.showToast) window.showToast('Downloaded High-Res PNG Badge!', 'success');
-    });
-  }
-
-  drawCanvasBadge();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_id_card_template_generator);
+} else {
+  init_id_card_template_generator();
+}

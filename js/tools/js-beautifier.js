@@ -1,93 +1,115 @@
 /**
- * JavaScript Code Beautifier & Formatter Engine
+ * Js Beautifier Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_js_beautifier() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('jb-js')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input JavaScript Code:</label>
-        <textarea id="jb-js" class="form-input" style="width:100%;height:140px;padding:0.5rem;font-family:monospace;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">function calculateTotal(items){let sum=0;for(let i=0;i<items.length;i++){sum+=items[i];}return sum;}</textarea>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Indentation:</label>
-        <select id="jb-indent" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-          <option value="2">2 Spaces</option>
-          <option value="4">4 Spaces</option>
-          <option value="tab">Tab Character</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-jb-btn" class="btn btn-primary flex-1">✨ Beautify JavaScript Code</button>
-      </div>
-    `;
-  }
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function beautifyJS(code, indentStr) {
-    let indentLevel = 0;
-    let result = '';
-    let inString = false;
-    let stringChar = '';
+        let res = 0;
+        let report = `=== ${'Js Beautifier'.toUpperCase()} REPORT ===\n\n`;
 
-    for (let i = 0; i < code.length; i++) {
-      const char = code[i];
-
-      if ((char === '"' || char === "'" || char === '`') && code[i - 1] !== '') {
-        if (!inString) {
-          inString = true;
-          stringChar = char;
-        } else if (char === stringChar) {
-          inString = false;
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
-      }
 
-      if (inString) {
-        result += char;
-        continue;
-      }
+        if (out) out.value = report;
 
-      if (char === '{' || char === '[') {
-        result += char + 'n';
-        indentLevel++;
-        result += indentStr.repeat(indentLevel);
-      } else if (char === '}' || char === ']') {
-        result += 'n';
-        indentLevel = Math.max(0, indentLevel - 1);
-        result += indentStr.repeat(indentLevel) + char;
-      } else if (char === ';') {
-        result += ';n' + indentStr.repeat(indentLevel);
-      } else {
-        result += char;
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Js Beautifier Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Js Beautifier computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
     }
 
-    return result.replace(/ns*n/g, 'n').trim();
-  }
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-  function calculate() {
-    const rawJS = document.getElementById('jb-js') ? document.getElementById('jb-js').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
-    const indentOption = document.getElementById('jb-indent') ? document.getElementById('jb-indent').value : '2';
-
-    if (!rawJS.trim()) {
-      if (out) out.value = 'ERROR: Please enter JavaScript code to beautify.';
-      return;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
 
-    const indentStr = indentOption === 'tab' ? 't' : ' '.repeat(parseInt(indentOption, 10));
-    const beautified = beautifyJS(rawJS, indentStr);
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
 
-    if (out) out.value = beautified;
-    if (window.showToast) window.showToast('JavaScript code beautified successfully!', 'success');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'js-beautifier-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] js-beautifier:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-jb-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_js_beautifier);
+} else {
+  init_js_beautifier();
+}

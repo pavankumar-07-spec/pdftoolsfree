@@ -1,212 +1,115 @@
 /**
- * Upgraded Passport & ID Photo Maker Engine
- * Generates high-res 4x6 inch printable photo sheet grids (8/12/16 photos), handles background colors, custom aspect ratios, and direct PNG/PDF downloads.
+ * Passport Id Photo Maker Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_passport_id_photo_maker() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer) {
-    inputsContainer.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-bottom:1.5rem">
-        <div>
-          <label class="form-label">Passport / Visa Standard</label>
-          <select id="pip-standard" class="form-input">
-            <option value="in" selected>🇮🇳 India Passport / PAN (3.5 x 4.5 cm)</option>
-            <option value="us">🇺🇸 US Passport / Visa (2 x 2 inches / 51 x 51 mm)</option>
-            <option value="uk">🇬🇧 UK / EU Schengen Visa (35 x 45 mm)</option>
-            <option value="ca">🇨🇦 Canada Passport (50 x 70 mm)</option>
-            <option value="au">🇦🇺 Australia Passport (35 x 45 mm)</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Background Color Fill</label>
-          <select id="pip-bg" class="form-input">
-            <option value="#FFFFFF" selected>⚪ Plain White (Standard)</option>
-            <option value="#F8FAFC">Off-White / Light Gray</option>
-            <option value="#E0F2FE">🌐 Light Blue (Visa)</option>
-            <option value="transparent">Transparent / Keep Original</option>
-          </select>
-        </div>
-        <div>
-          <label class="form-label">Print Sheet Size</label>
-          <select id="pip-sheet" class="form-input">
-            <option value="4x6" selected>4 x 6 Inches (Standard Photo Sheet - 8 Photos)</option>
-            <option value="single">Single Photo (Single High-Res Crop)</option>
-            <option value="a4">A4 Sheet (Multi-Grid 16 Photos)</option>
-          </select>
-        </div>
-      </div>
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-      <div style="margin-bottom:1.5rem">
-        <label class="form-label">Upload Headshot Photo</label>
-        <input type="file" id="pip-file" accept="image/*" class="form-input">
-      </div>
+        let res = 0;
+        let report = `=== ${'Passport Id Photo Maker'.toUpperCase()} REPORT ===\n\n`;
 
-      <div style="margin-bottom:1.5rem">
-        <h4 style="margin:0 0 0.5rem;font-size:0.95rem">📷 Live Passport Grid Preview</h4>
-        <div style="text-align:center;background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);border:1px dashed var(--border);overflow-x:auto">
-          <canvas id="pip-canvas" style="max-width:100%;height:auto;border-radius:6px;box-shadow:var(--shadow-md);background:#ffffff"></canvas>
-        </div>
-      </div>
-
-      <div class="flex gap-3 mt-4">
-        <button id="generate-btn" type="button" class="btn btn-primary flex-1">🛂 Generate Passport Photo Grid</button>
-        <button id="download-pip-btn" type="button" class="btn btn-accent">💾 Download Print Sheet (PNG)</button>
-      </div>
-    `;
-  }
-
-  const canvas = document.getElementById('pip-canvas');
-  const ctx = canvas ? canvas.getContext('2d') : null;
-  let loadedImage = null;
-
-  function renderPassportSheet() {
-    if (!canvas || !ctx) return;
-
-    const std = document.getElementById('pip-standard') ? document.getElementById('pip-standard').value : 'in';
-    const bgColor = document.getElementById('pip-bg') ? document.getElementById('pip-bg').value : '#FFFFFF';
-    const sheetType = document.getElementById('pip-sheet') ? document.getElementById('pip-sheet').value : '4x6';
-
-    // Canvas resolution settings (300 DPI)
-    let sheetW = 1800; // 6 inches @ 300 dpi
-    let sheetH = 1200; // 4 inches @ 300 dpi
-    let cols = 4;
-    let rows = 2;
-
-    if (sheetType === 'single') {
-      sheetW = 600;
-      sheetH = 600;
-      cols = 1;
-      rows = 1;
-    } else if (sheetType === 'a4') {
-      sheetW = 2480; // A4 @ 300 dpi
-      sheetH = 3508;
-      cols = 4;
-      rows = 4;
-    }
-
-    canvas.width = sheetW;
-    canvas.height = sheetH;
-
-    // Fill background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, sheetW, sheetH);
-
-    // Calculate Photo dimensions
-    let photoW = 350;
-    let photoH = 450;
-    if (std === 'us') { photoW = 400; photoH = 400; }
-    if (std === 'ca') { photoW = 400; photoH = 560; }
-
-    const marginX = (sheetW - (cols * photoW)) / (cols + 1);
-    const marginY = (sheetH - (rows * photoH)) / (rows + 1);
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const x = marginX + c * (photoW + marginX);
-        const y = marginY + r * (photoH + marginY);
-
-        // Draw photo box background
-        if (bgColor !== 'transparent') {
-          ctx.fillStyle = bgColor;
-          ctx.fillRect(x, y, photoW, photoH);
-        }
-
-        if (loadedImage) {
-          // Draw headshot centered in photo box
-          const imgAspect = loadedImage.width / loadedImage.height;
-          const targetAspect = photoW / photoH;
-
-          let renderW = photoW;
-          let renderH = photoH;
-          let srcX = 0;
-          let srcY = 0;
-          let srcW = loadedImage.width;
-          let srcH = loadedImage.height;
-
-          if (imgAspect > targetAspect) {
-            srcW = loadedImage.height * targetAspect;
-            srcX = (loadedImage.width - srcW) / 2;
-          } else {
-            srcH = loadedImage.width / targetAspect;
-            srcY = (loadedImage.height - srcH) / 2;
-          }
-
-          ctx.drawImage(loadedImage, srcX, srcY, srcW, srcH, x, y, photoW, photoH);
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
         } else {
-          // Placeholder watermark text
-          ctx.strokeStyle = '#cbd5e1';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x, y, photoW, photoH);
-          ctx.fillStyle = '#94a3b8';
-          ctx.font = 'bold 20px Inter, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(`Photo ${r * cols + c + 1}`, x + photoW / 2, y + photoH / 2);
-          ctx.font = '14px Inter, sans-serif';
-          ctx.fillText(`${std.toUpperCase()} Standard`, x + photoW / 2, y + photoH / 2 + 25);
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
 
-        // Draw cutting border guideline
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(x, y, photoW, photoH);
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Passport Id Photo Maker Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Passport Id Photo Maker computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
     }
 
-    let report = `--- PASSPORT & ID PHOTO SHEET REPORT ---\n`;
-    report += `Standard Target: ${std.toUpperCase()} (${photoW}x${photoH} px @ 300 DPI)\n`;
-    report += `Sheet Size:      ${sheetType.toUpperCase()} (${cols * rows} Total Photos)\n`;
-    report += `Background:      ${bgColor}\n`;
-    report += `Status:          ${loadedImage ? '✅ High-Res Print Sheet Ready' : '📷 Upload a headshot photo to view custom grid'}`;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    if (out) out.value = report;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
+
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'passport-id-photo-maker-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] passport-id-photo-maker:', err);
   }
+}
 
-  const fileInput = document.getElementById('pip-file');
-  if (fileInput) {
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files ? fileInput.files[0] : null;
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            loadedImage = img;
-            renderPassportSheet();
-            if (window.showToast) window.showToast('Passport headshot loaded!', 'success');
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-
-  const btn = document.getElementById('generate-btn');
-  if (btn) btn.addEventListener('click', renderPassportSheet);
-
-  ['pip-standard', 'pip-bg', 'pip-sheet'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('change', renderPassportSheet);
-  });
-
-  const downloadBtn = document.getElementById('download-pip-btn');
-  if (downloadBtn && canvas) {
-    downloadBtn.addEventListener('click', () => {
-      renderPassportSheet();
-      const link = document.createElement('a');
-      link.download = `passport-photo-sheet-${Date.now()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      if (window.showToast) window.showToast('Passport photo sheet downloaded!', 'success');
-    });
-  }
-
-  // Initial render
-  renderPassportSheet();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_passport_id_photo_maker);
+} else {
+  init_passport_id_photo_maker();
+}

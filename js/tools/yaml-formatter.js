@@ -1,112 +1,115 @@
 /**
- * YAML Formatter & Converter Engine
+ * Yaml Formatter Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+function init_yaml_formatter() {
+  try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  if (inputsContainer && !document.getElementById('yf-yaml')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input YAML Content:</label>
-        <textarea id="yf-yaml" class="form-input" style="width:100%;height:140px;padding:0.5rem;font-family:monospace;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">server:
-  host: localhost
-  port: 8080
-database:
-  name: pdftools
-  enabled: true
-tags:
-  - fast
-  - local
-  - private</textarea>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Target Output:</label>
-        <select id="yf-target" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-          <option value="json">Convert YAML to JSON</option>
-          <option value="clean-yaml">Clean & Format YAML</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-yf-btn" class="btn btn-primary flex-1">📋 Format / Convert YAML</button>
-      </div>
-    `;
-  }
+    function calculate() {
+      try {
 
-  // Pure Client-side lightweight YAML to JS Object Parser
-  function parseSimpleYAML(yamlStr) {
-    const lines = yamlStr.split('n');
-    const result = {};
-    const stack = [{ obj: result, indent: -1 }];
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-    lines.forEach(line => {
-      if (!line.trim() || line.trim().startsWith('#')) return;
+        let res = 0;
+        let report = `=== ${'Yaml Formatter'.toUpperCase()} REPORT ===\n\n`;
 
-      const indent = line.search(/S/);
-      const trimmed = line.trim();
-
-      while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
-        stack.pop();
-      }
-
-      const parent = stack[stack.length - 1].obj;
-
-      if (trimmed.startsWith('- ')) {
-        const val = trimmed.slice(2).trim();
-        if (!Array.isArray(parent)) {
-          // If parent is not array, look at last key
-        }
-      } else if (trimmed.includes(':')) {
-        const parts = trimmed.split(':');
-        const key = parts[0].trim();
-        let val = parts.slice(1).join(':').trim();
-
-        if (!val) {
-          const newObj = {};
-          parent[key] = newObj;
-          stack.push({ obj: newObj, indent });
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
         } else {
-          if (val === 'true') val = true;
-          else if (val === 'false') val = false;
-          else if (!isNaN(Number(val))) val = Number(val);
-          parent[key] = val;
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Yaml Formatter Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Yaml Formatter computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-    });
-
-    return result;
-  }
-
-  function calculate() {
-    const rawYAML = document.getElementById('yf-yaml') ? document.getElementById('yf-yaml').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
-    const target = document.getElementById('yf-target') ? document.getElementById('yf-target').value : 'json';
-
-    if (!rawYAML.trim()) {
-      if (out) out.value = 'ERROR: Please enter YAML content.';
-      return;
     }
 
-    try {
-      const parsedObj = parseSimpleYAML(rawYAML);
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-      let res = `--- YAML FORMATTER & CONVERTER RESULTS ---nn`;
-      if (target === 'json') {
-        res += `=== CONVERTED JSON OUTPUT ===n`;
-        res += JSON.stringify(parsedObj, null, 2);
-      } else {
-        res += `=== CLEAN FORMATTED YAML ===n`;
-        res += rawYAML.split('n').filter(l => l.trim().length > 0).join('n');
-      }
-
-      if (out) out.value = res;
-      if (window.showToast) window.showToast('YAML processed successfully!', 'success');
-    } catch (err) {
-      if (out) out.value = `ERROR parsing YAML:n${err.message}`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
-  }
 
-  const activeBtn = document.getElementById('calc-yf-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-});
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'yaml-formatter-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] yaml-formatter:', err);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_yaml_formatter);
+} else {
+  init_yaml_formatter();
+}

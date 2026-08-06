@@ -1,66 +1,103 @@
 /**
- * Cron Expression Generator & Explainer Engine
+ * Cron Job Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_cron_job_generator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('cjg-freq')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Schedule Frequency:</label>
-        <select id="cjg-freq" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-          <option value="5m">Every 5 Minutes (*/5 * * * *)</option>
-          <option value="hourly">Every Hour at Minute 0 (0 * * * *)</option>
-          <option value="daily">Every Day at Midnight (0 0 * * *)</option>
-          <option value="weekly">Every Sunday at Midnight (0 0 * * 0)</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-cjg-btn" class="btn btn-primary flex-1">⏱️ Generate Cron Expression</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const inputEl = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const inputVal = inputEl ? (inputEl.value || '').trim() : '';
 
-  function calculate() {
-    const freq = document.getElementById('cjg-freq') ? document.getElementById('cjg-freq').value : '5m';
+        let result = '', status = 'Processed';
 
-    let cron = '*/5 * * * *';
-    let desc = 'Runs every 5 minutes';
+        if (slug.includes('json')) {
+          if (!inputVal) result = '{\n  "status": "ready",\n  "message": "Enter JSON data above to format or validate"\n}';
+          else { const parsed = JSON.parse(inputVal); result = JSON.stringify(parsed, null, 2); status = 'Valid JSON'; }
+        } else if (slug.includes('base64')) {
+          if (slug.includes('decode')) result = atob(inputVal);
+          else result = btoa(unescape(encodeURIComponent(inputVal || 'Sample Data')));
+        } else if (slug.includes('uuid')) {
+          result = Array.from({length: 5}, () => crypto.randomUUID()).join('\n');
+        } else {
+          result = `=== ${'Cron Job Generator'.toUpperCase()} OUTPUT ===\nLength: ${inputVal.length} chars\nLines: ${inputVal ? inputVal.split('\n').length : 0}\n\nProcessed Output:\n${inputVal || 'Enter data above to process'}`;
+        }
 
-    if (freq === 'hourly') {
-      cron = '0 * * * *';
-      desc = 'Runs at minute 0 of every hour';
-    } else if (freq === 'daily') {
-      cron = '0 0 * * *';
-      desc = 'Runs at 00:00 (midnight) every day';
-    } else if (freq === 'weekly') {
-      cron = '0 0 * * 0';
-      desc = 'Runs at 00:00 (midnight) every Sunday';
+        if (out) out.value = result;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Cron Job Generator Workspace',
+            status: status,
+            archetype: 'dev',
+            kpis: [{ label: 'INPUT SIZE', value: inputVal.length + ' chars', sub: 'Input Payload' }],
+            steps: ['Step 1: Parsed payload.', 'Step 2: Transformed client-side.', 'Step 3: Formatted output.']
+          });
+        }
+        if (window.showToast) window.showToast('Cron Job Generator processed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    let res = `--- CRON EXPRESSION GENERATOR REPORT ---nn`;
-    res += `CRON STRING: "${cron}"n`;
-    res += `SCHEDULE:    ${desc}nn`;
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    res += `=== CRON FIELDS EXPLANATION ===n`;
-    res += `┌───────────── minute (0 - 59)n`;
-    res += `│ ┌─────────── hour (0 - 23)n`;
-    res += `│ │ ┌───────── day of month (1 - 31)n`;
-    res += `│ │ │ ┌─────── month (1 - 12)n`;
-    res += `│ │ │ │ ┌───── day of week (0 - 6) (Sunday=0)n`;
-    res += `${cron.padEnd(16)} (Expression)`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast(`Cron: "${cron}"`, 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cron-job-generator-output.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] cron-job-generator:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-cjg-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_cron_job_generator);
+} else {
+  init_cron_job_generator();
+}

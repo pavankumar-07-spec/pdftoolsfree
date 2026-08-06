@@ -1,11 +1,13 @@
-/categories/web-seo.html /categories/developer-tools.html 301
-/categories/security-encryption.html /categories/developer-tools.html 301
-/tools/shadow-generator.html /tools/box-shadow-generator.html 301
-/tools/image-compressor.html /tools/batch-image-compress.html 301
-/tools/image-compressor /tools/batch-image-compress.html 301
-/tools/assignment-tracker /tools/assignment-tracker.html 301
+# Cloudflare Pages Clean Redirects & Asset Cache Rules
 
-/tools/pdf-to-word.html /tools/pdf-to-text.html 301
-/tools/pdf-to-word /tools/pdf-to-text.html 301
-/tools/word-to-pdf.html /categories/pdf.html 301
-/tools/word-to-pdf /categories/pdf.html 301
+# Force HTTPS
+http://* https://:splat 301!
+
+# SPA / Clean Route Fallbacks
+/tools/* /tools/:splat.html 200
+
+# Static Asset Long-Term Cache Headers
+/css/* Cache-Control: public, max-age=31536000, immutable
+/js/* Cache-Control: public, max-age=31536000, immutable
+/fonts/* Cache-Control: public, max-age=31536000, immutable
+/icons/* Cache-Control: public, max-age=31536000, immutable

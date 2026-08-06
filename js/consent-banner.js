@@ -15,6 +15,16 @@
     hideBanner();
   }
 
+  function loadClarity() {
+    if (window.clarityLoaded) return;
+    window.clarityLoaded = true;
+    (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "x8xlyl54pl");
+  }
+
   function applyConsent(choice) {
     if (choice === 'granted') {
       window.dataLayer = window.dataLayer || [];
@@ -25,10 +35,8 @@
         'ad_personalization': 'granted',
         'analytics_storage': 'granted'
       });
-      // Trigger Clarity if not loaded
-      if (window.clarity) {
-        window.clarity('consent');
-      }
+      // Dynamically load Microsoft Clarity tag ONLY after user grants consent
+      loadClarity();
     } else {
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
@@ -82,7 +90,7 @@
         <div>
           <h4 style="margin:0 0 4px 0;font-size:0.95rem;font-weight:700">We value your privacy</h4>
           <p style="margin:0;font-size:0.85rem;color:var(--text-muted, #4b5563);line-height:1.4">
-            We use cookies and similar technologies to personalize ads (Google AdSense) and analyze website traffic (Microsoft Clarity). Learn more in our <a href="/privacy.html" style="color:var(--primary, #FF5A1F);text-decoration:underline">Privacy Policy</a>.
+            We use cookies to personalize ads (Google AdSense) and analyze traffic (Microsoft Clarity). Learn more in our <a href="/privacy.html" style="color:var(--primary, #FF5A1F);text-decoration:underline">Privacy Policy</a>.
           </p>
         </div>
       </div>

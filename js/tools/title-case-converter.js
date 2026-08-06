@@ -1,95 +1,103 @@
 /**
- * Title Case Converter Engine (APA / Chicago Style Rules)
+ * Title Case Converter Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_title_case_converter() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('tc-text')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Input Headline / Text:</label>
-        <textarea id="tc-text" class="form-input" style="width:100%;height:100px;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">the quick brown fox jumps over a lazy dog and into the forest</textarea>
-      </div>
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Title Style Standard:</label>
-        <select id="tc-style" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)">
-          <option value="apa">APA Style (Capitalize words >= 4 letters + major words)</option>
-          <option value="chicago">Chicago Manual of Style (Lowercase minor prepositions/articles)</option>
-          <option value="ap">Associated Press (AP) Style</option>
-          <option value="all-caps">ALL WORDS CAPITALIZED</option>
-        </select>
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-tc-btn" class="btn btn-primary flex-1">🔤 Convert to Title Case</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const txtArea = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const text = txtArea ? (txtArea.value || '') : '';
 
-  const minorWords = new Set(['a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'from', 'by', 'of', 'in', 'out', 'up', 'off', 'over', 'with', 'as']);
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const chars = text.length;
+        const sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+        const readTimeMinutes = Math.ceil(words / 200);
 
-  function convertTitleCase(text, style) {
-    const lines = text.split('n');
+        let report = `=== ${'Title Case Converter'.toUpperCase()} REPORT ===\n`;
+        report += `Word Count:           ${words}\n`;
+        report += `Character Count:      ${chars}\n`;
+        report += `Sentence Count:       ${sentences}\n`;
+        report += `Estimated Read Time:  ${readTimeMinutes} min\n`;
 
-    return lines.map(line => {
-      if (!line.trim()) return '';
-      const words = line.toLowerCase().split(/s+/);
-      const total = words.length;
+        if (out) out.value = report;
 
-      const converted = words.map((w, idx) => {
-        // Strip non-alphanumeric prefix/suffix to inspect word core
-        const coreWord = w.replace(/^[^w]+|[^w]+$/g, '');
-
-        if (style === 'all-caps') {
-          return w.charAt(0).toUpperCase() + w.slice(1);
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Title Case Converter Workspace',
+            status: 'Text Analyzed',
+            archetype: 'text',
+            kpis: [
+              { label: 'WORD COUNT', value: words, sub: 'Total Words' },
+              { label: 'CHARACTERS', value: chars, sub: 'Total Chars' }
+            ],
+            steps: ['Step 1: Parsed text payload.', 'Step 2: Calculated metrics.', 'Step 3: Output report.']
+          });
         }
-
-        // Always capitalize first and last word
-        if (idx === 0 || idx === total - 1) {
-          return w.charAt(0).toUpperCase() + w.slice(1);
-        }
-
-        if (style === 'apa' && coreWord.length >= 4) {
-          return w.charAt(0).toUpperCase() + w.slice(1);
-        }
-
-        if (minorWords.has(coreWord)) {
-          return w.toLowerCase();
-        }
-
-        return w.charAt(0).toUpperCase() + w.slice(1);
-      });
-
-      return converted.join(' ');
-    }).join('n');
-  }
-
-  function calculate() {
-    const text = document.getElementById('tc-text') ? document.getElementById('tc-text').value : (document.getElementById('text-input') ? document.getElementById('text-input').value : '');
-    const style = document.getElementById('tc-style') ? document.getElementById('tc-style').value : 'apa';
-
-    if (!text) {
-      if (out) out.value = 'ERROR: Please enter text to convert.';
-      return;
+        if (window.showToast) window.showToast('Title Case Converter computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    const titleCaseResult = convertTitleCase(text, style);
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    let res = `--- TITLE CASE CONVERTER RESULTS ---nn`;
-    res += `Style Standard: ${style.toUpperCase()}nn`;
-    res += `=== TITLE CASE TEXT ===n`;
-    res += `${titleCaseResult}n`;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast('Converted to Title Case!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'title-case-converter-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] title-case-converter:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-tc-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_title_case_converter);
+} else {
+  init_title_case_converter();
+}

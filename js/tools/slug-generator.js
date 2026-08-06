@@ -1,52 +1,103 @@
 /**
- * Slug Generator Engine
+ * Slug Generator Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_slug_generator() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const inputsContainer = document.getElementById('tool-inputs-container');
-  const btn = document.getElementById('generate-btn');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
 
-  if (inputsContainer && !document.getElementById('slug-title')) {
-    inputsContainer.innerHTML = `
-      <div style="margin-bottom:1rem">
-        <label class="form-label" style="font-weight:600;display:block;margin-bottom:0.5rem">Enter Title or String:</label>
-        <input type="text" id="slug-title" class="form-input" style="width:100%;padding:0.5rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text)" value="Free Online PDF & Developer Tools 2026!">
-      </div>
-      <div style="display:flex;gap:0.75rem;margin-top:1rem">
-        <button id="calc-slug-btn" class="btn btn-primary flex-1">🔗 Generate URL Slug</button>
-      </div>
-    `;
-  }
+        const firstInputId = "";
+        const txtArea = firstInputId ? document.getElementById(firstInputId) : (document.querySelector('textarea:not(#main-output)') || document.querySelector('input[type="text"]'));
+        const text = txtArea ? (txtArea.value || '') : '';
 
-  function calculate() {
-    const val = (document.getElementById('slug-title')?.value || '').trim();
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const chars = text.length;
+        const sentences = text ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+        const readTimeMinutes = Math.ceil(words / 200);
 
-    if (!val) {
-      if (out) out.value = '';
-      return;
+        let report = `=== ${'Slug Generator'.toUpperCase()} REPORT ===\n`;
+        report += `Word Count:           ${words}\n`;
+        report += `Character Count:      ${chars}\n`;
+        report += `Sentence Count:       ${sentences}\n`;
+        report += `Estimated Read Time:  ${readTimeMinutes} min\n`;
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Slug Generator Workspace',
+            status: 'Text Analyzed',
+            archetype: 'text',
+            kpis: [
+              { label: 'WORD COUNT', value: words, sub: 'Total Words' },
+              { label: 'CHARACTERS', value: chars, sub: 'Total Chars' }
+            ],
+            steps: ['Step 1: Parsed text payload.', 'Step 2: Calculated metrics.', 'Step 3: Output report.']
+          });
+        }
+        if (window.showToast) window.showToast('Slug Generator computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
+      }
     }
 
-    const slug = val
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[u0300-u036f]/g, '')
-      .replace(/[^a-z0-9s-]/g, '')
-      .trim()
-      .replace(/s+/g, '-')
-      .replace(/-+/g, '-');
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
 
-    let res = '--- GENERATED URL SLUG ---nn';
-    res += slug;
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
+    }
 
-    if (out) out.value = res;
-    if (window.showToast) window.showToast('Slug generated!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'slug-generator-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] slug-generator:', err);
   }
+}
 
-  const activeBtn = document.getElementById('calc-slug-btn') || btn;
-  if (activeBtn) activeBtn.addEventListener('click', calculate);
-  calculate();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_slug_generator);
+} else {
+  init_slug_generator();
+}

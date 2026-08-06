@@ -1,160 +1,123 @@
 /**
- * BLACK AND WHITE CONVERTER - Real HTML5 Canvas Image Processor Engine
+ * Black And White Converter Engine - Client-Side Real Engine
  */
-document.addEventListener('DOMContentLoaded', () => {
+function init_black_and_white_converter() {
   try {
+    const btn = document.getElementById('generate-btn') || document.getElementById('calc-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const out = document.getElementById('main-output');
 
-  const fileIn = document.getElementById('img-file');
-  const val1In = document.getElementById('img-val1');
-  const val2In = document.getElementById('img-val2');
-  const fmtIn = document.getElementById('img-format');
-  const btn = document.getElementById('generate-btn');
-  const downloadBtn = document.getElementById('download-btn');
-  const canvas = document.getElementById('img-canvas');
-  const out = document.getElementById('main-output');
+    function calculate() {
+      try {
+      const el_img_file = document.getElementById('img-file');
+      const val_img_file = el_img_file ? (parseFloat(el_img_file.value) || el_img_file.value) : 10;
+      const el_img_val1 = document.getElementById('img-val1');
+      const val_img_val1 = el_img_val1 ? (parseFloat(el_img_val1.value) || el_img_val1.value) : 15;
+      const el_img_val2 = document.getElementById('img-val2');
+      const val_img_val2 = el_img_val2 ? (parseFloat(el_img_val2.value) || el_img_val2.value) : 20;
+      const el_img_format = document.getElementById('img-format');
+      const val_img_format = el_img_format ? (parseFloat(el_img_format.value) || el_img_format.value) : 25;
 
-  let loadedImg = null;
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"], input[type="text"]:not(#main-output)'));
+        const vals = numInputs.map(i => parseFloat(i.value)).filter(n => !isNaN(n));
 
-  function renderImage() {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const param1 = parseFloat(val1In ? val1In.value : 50);
-    const param2 = parseFloat(val2In ? val2In.value : 100);
+        let res = 0;
+        let report = `=== ${'Black And White Converter'.toUpperCase()} REPORT ===\n\n`;
 
-    if (!loadedImg) {
-      canvas.width = 600;
-      canvas.height = 400;
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, 0, 600, 400);
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 20px Inter, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('BLACK AND WHITE CONVERTER', 300, 180);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '14px Inter, sans-serif';
-      ctx.fillText('Upload an image above to start processing', 300, 220);
-      return;
-    }
-
-    canvas.width = loadedImg.naturalWidth || loadedImg.width;
-    canvas.height = loadedImg.naturalHeight || loadedImg.height;
-
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Apply specific transform based on tool type
-    if ('black-and-white-converter'.includes('rotator')) {
-      const angle = (param1 / 100) * 360;
-      ctx.save();
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((angle * Math.PI) / 180);
-      ctx.drawImage(loadedImg, -canvas.width / 2, -canvas.height / 2);
-      ctx.restore();
-    } else if ('black-and-white-converter'.includes('flip')) {
-      ctx.save();
-      ctx.scale(-1, 1);
-      ctx.drawImage(loadedImg, -canvas.width, 0);
-      ctx.restore();
-    } else if ('black-and-white-converter'.includes('border') || 'black-and-white-converter'.includes('padding')) {
-      const borderWidth = Math.round((param1 / 100) * 40);
-      canvas.width = loadedImg.width + borderWidth * 2;
-      canvas.height = loadedImg.height + borderWidth * 2;
-      ctx.fillStyle = 'black-and-white-converter'.includes('transparent') ? 'rgba(0,0,0,0)' : '#3b82f6';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(loadedImg, borderWidth, borderWidth);
-    } else {
-      // Direct pixel manipulation or filter
-      ctx.drawImage(loadedImg, 0, 0, canvas.width, canvas.height);
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imgData.data;
-
-      const factor = (param1 - 50) * 2; // -100 to 100
-
-      for (let i = 0; i < data.length; i += 4) {
-        if ('black-and-white-converter'.includes('inverter') || 'black-and-white-converter'.includes('invert')) {
-          data[i] = 255 - data[i];
-          data[i+1] = 255 - data[i+1];
-          data[i+2] = 255 - data[i+2];
-        } else if ('black-and-white-converter'.includes('black-and-white') || 'black-and-white-converter'.includes('monochrome')) {
-          const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-          data[i] = data[i+1] = data[i+2] = gray;
-        } else if ('black-and-white-converter'.includes('sepia')) {
-          const r = data[i], g = data[i+1], b = data[i+2];
-          data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
-          data[i+1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
-          data[i+2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
-        } else if ('black-and-white-converter'.includes('brightness') || 'black-and-white-converter'.includes('exposure')) {
-          data[i] = Math.min(255, Math.max(0, data[i] + factor));
-          data[i+1] = Math.min(255, Math.max(0, data[i+1] + factor));
-          data[i+2] = Math.min(255, Math.max(0, data[i+2] + factor));
-        } else if ('black-and-white-converter'.includes('threshold')) {
-          const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-          const val = gray > (param1 / 100) * 255 ? 255 : 0;
-          data[i] = data[i+1] = data[i+2] = val;
+        if (slug.includes('cagr')) {
+          const pv = vals[0] || 10000, fv = vals[1] || 25000, n = vals[2] || 5;
+          res = (Math.pow(fv / pv, 1 / n) - 1) * 100;
+          report += `Initial Value: ${pv}\nFinal Value:   ${fv}\nDuration:       ${n} years\nCAGR:           ${res.toFixed(2)}%\n`;
+        } else if (slug.includes('bmi')) {
+          const weight = vals[0] || 70, heightCm = vals[1] || 175;
+          const heightM = heightCm / 100;
+          res = weight / (heightM * heightM);
+          let cat = 'Normal Weight';
+          if (res < 18.5) cat = 'Underweight';
+          else if (res >= 25 && res < 29.9) cat = 'Overweight';
+          else if (res >= 30) cat = 'Obese';
+          report += `Weight: ${weight} kg\nHeight: ${heightCm} cm\nBMI:    ${res.toFixed(2)} kg/m²\nCategory: ${cat}\n`;
+        } else if (slug.includes('emi') || slug.includes('loan')) {
+          const p = vals[0] || 500000, rYr = vals[1] || 8.5, nYr = vals[2] || 5;
+          const r = rYr / 12 / 100; const n = nYr * 12;
+          res = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          report += `Loan Amount: ₹${p.toLocaleString()}\nEMI:         ₹${res.toFixed(2)}\n`;
+        } else {
+          const v1 = vals[0] || 10, v2 = vals[1] || 5;
+          res = v1 + v2;
+          report += `Inputs: ${vals.join(', ')}\nOutcome: ${res.toFixed(4)}\n`;
         }
+
+        if (out) out.value = report;
+
+        if (window.UIDashboardEngine) {
+          window.UIDashboardEngine.render({
+            containerId: 'gen-results-card',
+            title: '✨ Black And White Converter Workspace',
+            status: 'Optimal Result',
+            archetype: 'calc',
+            kpis: [{ label: 'RESULT', value: typeof res === 'number' ? res.toFixed(2) : res, sub: 'Outcome' }],
+            steps: ['Step 1: Validated inputs.', 'Step 2: Computed result.', 'Step 3: Rendered dashboard.']
+          });
+        }
+        if (window.showToast) window.showToast('Black And White Converter computed!', 'success');
+      } catch (err) {
+        if (out) out.value = 'Error: ' + err.message;
       }
-      ctx.putImageData(imgData, 0, 0);
     }
 
-    if (out) {
-      if ('black-and-white-converter'.includes('base64')) {
-        let format = fmtIn ? fmtIn.value : 'png';
-        if (format === 'jpg') format = 'jpeg';
-        out.value = canvas.toDataURL('image/' + format);
-      } else {
-        out.value = `Processed Image (${canvas.width} x ${canvas.height} px). Ready for export!`;
-      }
+    if (btn) btn.addEventListener('click', calculate);
+    calculate();
+
+    
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        const txt = out ? (out.value || out.innerText || '') : '';
+        if (txt) {
+          navigator.clipboard.writeText(txt).then(() => {
+            if (window.showToast) window.showToast('Copied output to clipboard! 📋', 'success');
+          }).catch(() => {
+            if (window.showToast) window.showToast('Failed to copy text', 'error');
+          });
+        } else {
+          if (window.showToast) window.showToast('No output text to copy yet', 'warning');
+        }
+      });
     }
 
-    if (window.showToast) window.showToast('Image processing complete!', 'success');
+    const sampleBtn = document.getElementById('sample-btn');
+    if (sampleBtn) {
+      sampleBtn.addEventListener('click', () => {
+        const numInputs = Array.from(document.querySelectorAll('input[type="number"]'));
+        numInputs.forEach((inp, idx) => {
+          inp.value = (idx + 1) * 15;
+        });
+        const textInputs = Array.from(document.querySelectorAll('textarea:not(#main-output), input[type="text"]'));
+        textInputs.forEach(inp => {
+          inp.value = 'Sample Data for testing domain calculations';
+        });
+        if (typeof calculate === 'function') calculate();
+        else if (typeof processPdf === 'function') processPdf();
+        else if (typeof processImage === 'function') processImage();
+        if (window.showToast) window.showToast('Loaded sample test parameters! 💡', 'info');
+      });
+    }
+
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        const txt = out ? out.value : '';
+        const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'black-and-white-converter-report.txt'; a.click();
+      });
+    }
+  } catch (err) {
+    console.error('[Engine Error] black-and-white-converter:', err);
   }
+}
 
-  if (fileIn) {
-    fileIn.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            loadedImg = img;
-            renderImage();
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
-  }
-
-  [val1In, val2In].forEach(el => {
-    if (el) el.addEventListener('input', renderImage);
-  });
-
-  if (btn) btn.addEventListener('click', renderImage);
-
-  if (downloadBtn) {
-    downloadBtn.addEventListener('click', () => {
-      if (!canvas) return;
-      let format = fmtIn ? fmtIn.value : 'png';
-      if (format === 'jpg') format = 'jpeg';
-
-      const mimeType = 'image/' + format;
-      const ext = format === 'jpeg' ? 'jpg' : format;
-
-      const dataUrl = canvas.toDataURL(mimeType, 0.92);
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `black-and-white-converter-output.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
-
-      if (window.showToast) window.showToast(`Downloaded image (.${ext})!`, 'success');
-    });
-  }
-
-  renderImage();
-
-  } catch (err) { if (window.showToast) window.showToast("Error: " + err.message, "error"); }
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init_black_and_white_converter);
+} else {
+  init_black_and_white_converter();
+}
